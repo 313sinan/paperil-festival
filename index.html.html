@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Paperil Festival</title>
+<style>
+:root{
+  --accent:#e2952e;
+  --accent-dark:#b6721a;
+  --ink:#20211d;
+  --cement:#eeece4;
+  --cement-2:#e2dfd4;
+  --white:#fbfaf7;
+  --line:#d8d4c6;
+  --danger:#c1443a;
+  --good:#3f7d54;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(32,33,29,0.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--cement);
+  color:var(--ink);
+  overscroll-behavior-y:none;
+}
+#app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--white);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,0.06);}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select,textarea{font-family:inherit;font-size:15px;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:var(--ink);color:var(--white);
+  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+}
+.topbar .brand{font-weight:800;letter-spacing:.3px;font-size:16px;display:flex;align-items:center;gap:8px;}
+.topbar .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+.topbar .actions{display:flex;gap:8px;align-items:center;}
+.iconbtn{background:rgba(255,255,255,0.12);color:var(--white);width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;}
+.badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* ---------- content ---------- */
+.content{flex:1;padding:14px 14px 90px;overflow-y:auto;}
+.screen{display:none;}
+.screen.active{display:block;animation:fade .2s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- login landing ---------- */
+.hero{
+  text-align:center;padding:34px 10px 20px;
+}
+.hero h1{font-size:26px;margin:6px 0 2px;letter-spacing:.2px;}
+.hero p{color:#6b6a62;font-size:14px;margin:0;}
+.login-grid{display:flex;flex-direction:column;gap:12px;margin-top:24px;}
+.login-card{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);
+}
+.login-card .ic{width:46px;height:46px;border-radius:12px;background:var(--cement-2);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;}
+.login-card .txt b{display:block;font-size:16px;}
+.login-card .txt span{font-size:12.5px;color:#7a7a72;}
+.login-card:active{transform:scale(.98);}
+
+/* ---------- cards / lists ---------- */
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
+.card h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center;justify-content:space-between;}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--cement-2);gap:10px;}
+.row:last-child{border-bottom:none;}
+.row .main b{display:block;font-size:14.5px;}
+.row .main span{font-size:12px;color:#7a7a72;}
+.pill{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--cement-2);color:var(--ink);white-space:nowrap;font-weight:600;}
+.pill.accent{background:var(--accent);color:#fff;}
+.pill.good{background:#e4f1e7;color:var(--good);}
+.pill.danger{background:#f8e6e4;color:var(--danger);}
+.pill.grey{background:#eee;color:#888;}
+
+label{display:block;font-size:12.5px;color:#6b6a62;margin:10px 0 4px;font-weight:600;}
+input[type=text],input[type=password],input[type=number],input[type=date],input[type=datetime-local],select,textarea{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--white);outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 16px;border-radius:10px;background:var(--ink);color:#fff;font-weight:700;font-size:14px;width:100%;
+}
+.btn.accent{background:var(--accent);}
+.btn.outline{background:transparent;border:1.5px solid var(--ink);color:var(--ink);}
+.btn.danger{background:var(--danger);}
+.btn.good{background:var(--good);}
+.btn.small{width:auto;padding:8px 12px;font-size:13px;}
+.btn:active{opacity:.85;}
+.btn[disabled]{opacity:.45;pointer-events:none;}
+.btnrow{display:flex;gap:8px;margin-top:10px;}
+.btnrow .btn{flex:1;}
+
+.searchbar{display:flex;gap:8px;margin-bottom:12px;}
+.searchbar input{flex:1;}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:none;padding:8px 13px;border-radius:99px;background:var(--cement-2);font-size:13px;font-weight:600;color:#565550;}
+.tab.active{background:var(--ink);color:#fff;}
+
+.empty{text-align:center;padding:30px 10px;color:#8a8980;font-size:13.5px;}
+
+/* ---------- bottom nav ---------- */
+.bottomnav{
+  position:sticky;bottom:0;left:0;right:0;background:var(--white);
+  border-top:1px solid var(--line);display:flex;z-index:20;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;background:transparent;color:#8a8980;font-size:10.5px;font-weight:700;}
+.navbtn .ic{font-size:18px;}
+.navbtn.active{color:var(--accent);}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(20,20,18,0.5);display:none;align-items:flex-end;justify-content:center;z-index:100;}
+.overlay.show{display:flex;}
+.modal{background:var(--white);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto;animation:up .2s ease;}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.modal h2{margin:0 0 4px;font-size:17px;}
+.modal .sub{font-size:12.5px;color:#7a7a72;margin-bottom:8px;}
+.closebar{width:38px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 12px;}
+
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:13.5px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s, bottom .25s;box-shadow:var(--shadow);}
+.toast.show{opacity:1;bottom:100px;}
+
+.colorswatch{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 1px var(--line);}
+.sw.on{box-shadow:0 0 0 2px var(--ink);}
+
+.poster-img{width:100%;border-radius:10px;display:block;margin-bottom:8px;object-fit:cover;max-height:260px;}
+.notedot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;}
+
+.statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat{background:var(--cement-2);border-radius:12px;padding:12px 8px;text-align:center;}
+.stat b{display:block;font-size:20px;}
+.stat span{font-size:10.5px;color:#6b6a62;}
+
+.chip{display:inline-block;font-size:11.5px;padding:4px 10px;border-radius:99px;background:var(--cement-2);margin:2px 4px 2px 0;}
+.linkbtn{background:none;color:var(--accent);font-weight:700;font-size:13px;padding:4px;}
+.small-note{font-size:11.5px;color:#8a8980;margin-top:6px;}
+.loading{text-align:center;padding:60px 10px;color:#8a8980;}
+.progressbar{height:8px;background:var(--cement-2);border-radius:99px;overflow:hidden;margin-top:6px;}
+.progressbar div{height:100%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar" id="topbar" style="display:none;">
+    <div class="brand"><span class="dot"></span><span id="brandName">Paperil Festival</span></div>
+    <div class="actions" id="topbarActions"></div>
+  </div>
+  <div class="content" id="content">
+    <div class="loading" id="loadingScreen">Loading Paperil Festival…</div>
+  </div>
+  <div class="bottomnav" id="bottomnav" style="display:none;"></div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================================================================
+   PAPERIL FESTIVAL — single-file site
+   Data lives in shared persistent storage (window.storage) so Admin,
+   Team Leaders and Students all see the same live data from their phones.
+====================================================================== */
+
+const CATEGORIES = ["Junior","Sub Junior","Premier","General"];
+const STUDENT_CATEGORIES = ["Junior","Sub Junior","Premier"];
+const TEAM_COLORS = ["#e2952e","#c1443a","#3f7d54","#3c6e8f","#8654a6","#1b7a8f"];
+let STATE = null;          // in-memory mirror of all shared data
+let SESSION = { role:null, teamId:null, studentQuery:"" }; // local-only, not shared
+let currentAdminTab = "overview";
+let currentLeaderTab = "roster";
+
+/* ---------------- storage helpers ---------------- */
+async function loadKey(key, fallback){
+  try{
+    const r = await window.storage.get(key, true);
+    return r ? JSON.parse(r.value) : fallback;
+  }catch(e){ return fallback; }
+}
+async function saveKey(key, value){
+  try{ await window.storage.set(key, JSON.stringify(value), true); }
+  catch(e){ toast("Save failed — check connection"); }
+}
+// Re-fetch one key fresh from shared storage right before we mutate it.
+// This means our change is applied on top of everyone else's latest data,
+// instead of possibly overwriting what another phone just saved.
+async function pull(key){
+  const fallback = STATE[key];
+  STATE[key] = await loadKey(key, fallback);
+  return STATE[key];
+}
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function defaultState(){
+  return {
+    settings:{
+      siteColor:"#e2952e",
+      adminUsername:"admin",
+      adminPassword:"admin123",
+      maxEventsPerStudent:3,
+      registrationDeadline:"",
+      toppersHidden:false,
+      fontLoaded:true
+    },
+    teams:[
+      {id:"t1",name:"Team A",username:"teama",password:"leader123",points:0,color:"#e2952e"},
+      {id:"t2",name:"Team B",username:"teamb",password:"leader123",points:0,color:"#3c6e8f"},
+      {id:"t3",name:"Team C",username:"teamc",password:"leader123",points:0,color:"#3f7d54"}
+    ],
+    students:[],
+    competitions:[],
+    posters:[],
+    toppers:[],
+    messages:[],
+    notifications:[],
+    published:{ teamPoints:{}, results:{} } // snapshot shown to students/leaders; results[eventId] = participants array
+  };
+}
+
+async function loadAll(){
+  const [settings,teams,students,competitions,posters,toppers,messages,notifications,published] = await Promise.all([
+    loadKey("settings", null),
+    loadKey("teams", null),
+    loadKey("students", []),
+    loadKey("competitions", []),
+    loadKey("posters", []),
+    loadKey("toppers", []),
+    loadKey("messages", []),
+    loadKey("notifications", []),
+    loadKey("published", null)
+  ]);
+  const d = defaultState();
+  STATE = {
+    settings: Object.assign({}, d.settings, settings || {}),
+    teams: teams || d.teams,
+    students, competitions, posters, toppers, messages, notifications,
+    published: published || d.published
+  };
+  if(!settings) await saveKey("settings", STATE.settings);
+  if(!teams) await saveKey("teams", STATE.teams);
+  if(!published) await saveKey("published", STATE.published);
+  applyTheme();
+}
+
+async function save(part){
+  await saveKey(part, STATE[part]);
+}
+
+function applyTheme(){
+  document.documentElement.style.setProperty('--accent', STATE.settings.siteColor);
+  // derive a darker shade roughly
+  document.documentElement.style.setProperty('--accent-dark', shade(STATE.settings.siteColor, -18));
+}
+function shade(hex, percent){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16);
+  let r=(num>>16)+percent, g=((num>>8)&0x00FF)+percent, b=(num&0x0000FF)+percent;
+  r=Math.max(Math.min(255,r),0); g=Math.max(Math.min(255,g),0); b=Math.max(Math.min(255,b),0);
+  return "#"+(0x1000000+r*0x10000+g*0x100+b).toString(16).slice(1);
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------------- modal ---------------- */
+function openModal(html){
+  document.getElementById('modalBody').innerHTML = '<div class="closebar"></div>' + html;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+
+/* ---------------- render root ---------------- */
+function render(){
+  if(!SESSION.role) return renderLogin();
+  if(SESSION.role==='admin') return renderAdmin();
+  if(SESSION.role==='leader') return renderLeader();
+  if(SESSION.role==='student') return renderStudent();
+}
+
+/* ============================================================
+   LOGIN / LANDING
+============================================================ */
+function renderLogin(){
+  document.getElementById('topbar').style.display='none';
+  document.getElementById('bottomnav').style.display='none';
+  document.getElementById('bottomnav').innerHTML='';
+  const hasPoints = STATE.published.teamPoints && Object.keys(STATE.published.teamPoints).length>0;
+  const standings = STATE.teams.slice().sort((a,b)=>(STATE.published.teamPoints[b.id]||0)-(STATE.published.teamPoints[a.id]||0));
+  document.getElementById('content').innerHTML = `
+    <div class="hero">
+      <div style="font-size:34px;">🎪</div>
+      <h1>Paperil Festival</h1>
+      <p>Choose how you'd like to enter</p>
+    </div>
+    <div class="login-grid">
+      <div class="login-card" onclick="openAdminLogin()">
+        <div class="ic">🛠️</div>
+        <div class="txt"><b>Admin</b><span>Manage the whole festival</span></div>
+      </div>
+      <div class="login-card" onclick="openLeaderLogin()">
+        <div class="ic">🧑‍🤝‍🧑</div>
+        <div class="txt"><b>Team Leader</b><span>Register students, view results</span></div>
+      </div>
+      <div class="login-card" onclick="openStudentEntry()">
+        <div class="ic">🎓</div>
+        <div class="txt"><b>Student</b><span>Check your events &amp; results</span></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:22px;">
+      <h3>🏆 Team Standings</h3>
+      ${hasPoints? standings.map((t,i)=>`<div class="row"><div class="main"><b><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(t.color||'#999')};margin-right:6px;"></span>${i+1}. ${esc(t.name)}</b></div><div class="pill accent">${STATE.published.teamPoints[t.id]||0} pts</div></div>`).join('') : '<div class="small-note">Results haven\'t been published yet</div>'}
+    </div>
+  `;
+}
+
+function openAdminLogin(){
+  openModal(`
+    <h2>Admin Login</h2>
+    <div class="sub">Enter the admin username &amp; password</div>
+    <label>Username</label>
+    <input type="text" id="adminUserInput" placeholder="Username">
+    <label>Password</label>
+    <input type="password" id="adminPwInput" placeholder="Password">
+    <div class="btnrow"><button class="btn accent" onclick="doAdminLogin()">Login</button></div>
+  `);
+}
+function doAdminLogin(){
+  const u = document.getElementById('adminUserInput').value.trim();
+  const v = document.getElementById('adminPwInput').value;
+  if(u === STATE.settings.adminUsername && v === STATE.settings.adminPassword){
+    SESSION.role='admin'; closeModal(); render();
+  } else toast("Wrong username or password");
+}
+
+function openLeaderLogin(){
+  openModal(`
+    <h2>Team Leader Login</h2>
+    <div class="sub">Use the username &amp; password given by admin</div>
+    <label>Username</label>
+    <input type="text" id="leaderUser">
+    <label>Password</label>
+    <input type="password" id="leaderPass">
+    <div class="btnrow"><button class="btn accent" onclick="doLeaderLogin()">Login</button></div>
+  `);
+}
+function doLeaderLogin(){
+  const u = document.getElementById('leaderUser').value.trim();
+  const p = document.getElementById('leaderPass').value;
+  const team = STATE.teams.find(t=>t.username===u && t.password===p);
+  if(team){ SESSION.role='leader'; SESSION.teamId=team.id; closeModal(); render(); }
+  else toast("Invalid username or password");
+}
+
+function openStudentEntry(){
+  SESSION.role='student'; render();
+}
+
+function logout(){ SESSION = {role:null, teamId:null, studentQuery:""}; render(); }
+async function refreshNow(){ await loadAll(); render(); toast("Refreshed"); }
+
+/* ============================================================
+   TOP BAR + BOTTOM NAV builders
+============================================================ */
+function setTopbar(title, actionsHtml){
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('brandName').textContent = title;
+  document.getElementById('topbarActions').innerHTML = actionsHtml || '';
+}
+function setBottomNav(items, activeId, onClickPrefix){
+  const nav = document.getElementById('bottomnav');
+  nav.style.display='flex';
+  nav.innerHTML = items.map(it=>`
+    <button class="navbtn ${it.id===activeId?'active':''}" onclick="${onClickPrefix}('${it.id}')">
+      <span class="ic">${it.icon}</span><span>${it.label}</span>
+    </button>`).join('');
+}
+
+/* ============================================================
+   ADMIN
+============================================================ */
+function renderAdmin(){
+  setTopbar("Admin", `<button class="iconbtn" onclick="refreshNow()">🔄</button><button class="iconbtn" onclick="openAdminMessagesQuick()">💬${unreadMsgCount()?`<span class="badge">${unreadMsgCount()}</span>`:''}</button><button class="iconbtn" onclick="logout()">⎋</button>`);
+  setBottomNav([
+    {id:'overview',icon:'📊',label:'Overview'},
+    {id:'students',icon:'🎓',label:'Students'},
+    {id:'teams',icon:'🧑‍🤝‍🧑',label:'Teams'},
+    {id:'events',icon:'🏆',label:'Events'},
+    {id:'more',icon:'⚙️',label:'More'},
+  ], currentAdminTab==='overview'||['overview'].includes(currentAdminTab)?currentAdminTab:(['students','teams','events'].includes(currentAdminTab)?currentAdminTab:'more'), 'switchAdminTab');
+  const c = document.getElementById('content');
+  if(currentAdminTab==='overview') c.innerHTML = adminOverviewHtml();
+  else if(currentAdminTab==='students') c.innerHTML = adminStudentsHtml();
+  else if(currentAdminTab==='teams') c.innerHTML = adminTeamsHtml();
+  else if(currentAdminTab==='events') c.innerHTML = adminEventsHtml();
+  else c.innerHTML = adminMoreHtml();
+}
+function switchAdminTab(id){ currentAdminTab=id; render(); }
+function unreadMsgCount(){ return STATE.messages.filter(m=>!m.reply).length; }
+
+function adminOverviewHtml(){
+  const totalStudents = STATE.students.length;
+  const totalEvents = STATE.competitions.length;
+  const live = STATE.competitions.filter(e=>e.status==='started').length;
+  const teamRows = STATE.teams.map(t=>{
+    const pts = draftTeamPoints(t.id);
+    return `<div class="row"><div class="main"><b>${esc(t.name)}</b><span>${teamStudentCount(t.id)} students</span></div><div class="pill accent">${pts} pts (live)</div></div>`;
+  }).join('');
+  const pubRows = STATE.teams.map(t=>{
+    const p = STATE.published.teamPoints[t.id]||0;
+    return `<div class="row"><div class="main"><b>${esc(t.name)}</b></div><div class="pill good">${p} pts (published)</div></div>`;
+  }).join('');
+  return `
+    <div class="statgrid">
+      <div class="stat"><b>${totalStudents}</b><span>Students</span></div>
+      <div class="stat"><b>${totalEvents}</b><span>Events</span></div>
+      <div class="stat"><b>${live}</b><span>Live now</span></div>
+    </div>
+    <div class="card"><h3>Live standings (admin-only, not published)</h3>${teamRows}</div>
+    <div class="card"><h3>Published standings <button class="linkbtn" onclick="publishResults()">Publish now</button></h3>${pubRows}<div class="small-note">Publishing updates what Students &amp; Leaders can see. Nothing new shows to them until you publish again.</div></div>
+    <div class="card"><h3>Top 5 per category</h3>${top5Html()}</div>
+  `;
+}
+function teamStudentCount(teamId){ return STATE.students.filter(s=>s.teamId===teamId).length; }
+function draftTeamPoints(teamId){
+  let pts = 0;
+  STATE.competitions.forEach(ev=>{
+    if(ev.category==='General'){
+      pts += (ev.generalMarks && ev.generalMarks[teamId]) ? Number(ev.generalMarks[teamId]) : 0;
+    } else {
+      (ev.participants||[]).forEach(p=>{
+        const st = STATE.students.find(s=>s.id===p.studentId);
+        if(st && st.teamId===teamId && p.marks) pts += Number(p.marks);
+      });
+    }
+  });
+  return pts;
+}
+function top5Html(){
+  const scores = {};
+  STATE.students.forEach(s=>scores[s.id]=0);
+  STATE.competitions.forEach(ev=>{
+    if(ev.category==='General') return;
+    (ev.participants||[]).forEach(p=>{ if(p.marks) scores[p.studentId]=(scores[p.studentId]||0)+Number(p.marks); });
+  });
+  const groups = {};
+  CATEGORIES.filter(c=>c!=='General').forEach(cat=>groups[cat]=[]);
+  STATE.students.forEach(s=>{ if(groups[s.category]) groups[s.category].push({name:s.name,score:scores[s.id]||0,team:teamName(s.teamId)}); });
+  return Object.keys(groups).map(cat=>{
+    const top = groups[cat].sort((a,b)=>b.score-a.score).slice(0,5).filter(x=>x.score>0);
+    return `<div style="margin-bottom:10px;"><b style="font-size:13px;">${cat}</b>${top.length? top.map((t,i)=>`<div class="row"><div class="main"><b>${i+1}. ${esc(t.name)}</b><span>${esc(t.team)}</span></div><div class="pill">${t.score}</div></div>`).join('') : '<div class="small-note">No marks yet</div>'}</div>`;
+  }).join('');
+}
+function teamName(id){ const t=STATE.teams.find(t=>t.id===id); return t?t.name:'—'; }
+
+async function publishResults(){
+  await pull('competitions'); await pull('teams'); await pull('students');
+  const pts = {};
+  STATE.teams.forEach(t=>pts[t.id]=draftTeamPoints(t.id));
+  const results = {};
+  STATE.competitions.forEach(ev=>{
+    results[ev.id] = (ev.participants||[]).map(p=>({studentId:p.studentId, marks:p.marks, grade:p.grade||null, position:p.position||null, chestNumber:p.chestNumber||null}));
+    if(ev.category==='General') results[ev.id+'_general'] = Object.assign({}, ev.generalMarks);
+  });
+  STATE.published = { teamPoints: pts, results };
+  await save('published');
+  toast("Results published");
+  render();
+}
+
+/* ---- Students tab ---- */
+function adminStudentsHtml(){
+  const q=(SESSION.adminStudentSearch||'').toLowerCase();
+  const list = STATE.students.filter(s=>s.name.toLowerCase().includes(q));
+  return `
+    <div class="searchbar"><input type="text" placeholder="Search students…" value="${esc(SESSION.adminStudentSearch||'')}" oninput="SESSION.adminStudentSearch=this.value;renderStudentsListOnly();"></div>
+    <button class="btn accent" style="margin-bottom:12px;" onclick="openAddStudent()">+ Add Student</button>
+    <div id="studentsListWrap">${studentsListHtml(list)}</div>
+  `;
+}
+function studentsListHtml(list){
+  if(!list.length) return `<div class="empty">No students yet</div>`;
+  return `<div class="card">` + list.map(s=>`
+    <div class="row">
+      <div class="main"><b>${esc(s.name)}</b><span>${s.category} · ${teamName(s.teamId)}</span></div>
+      <button class="linkbtn" onclick="openEditStudent('${s.id}')">Edit</button>
+    </div>`).join('') + `</div>`;
+}
+function renderStudentsListOnly(){
+  const q=(SESSION.adminStudentSearch||'').toLowerCase();
+  const list = STATE.students.filter(s=>s.name.toLowerCase().includes(q));
+  document.getElementById('studentsListWrap').innerHTML = studentsListHtml(list);
+}
+function openAddStudent(){
+  openModal(`
+    <h2>Add Student</h2>
+    <label>Name</label><input type="text" id="stName">
+    <label>Category</label>
+    <select id="stCat">${STUDENT_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    <label>Team</label>
+    <select id="stTeam">${STATE.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select>
+    <div class="btnrow"><button class="btn accent" onclick="saveNewStudent()">Add</button></div>
+  `);
+}
+async function saveNewStudent(){
+  const name = document.getElementById('stName').value.trim();
+  if(!name) return toast("Enter a name");
+  const s = {id:uid(), name, category:document.getElementById('stCat').value, teamId:document.getElementById('stTeam').value};
+  await pull('students');
+  STATE.students.push(s); await save('students'); closeModal(); toast("Student added"); render();
+}
+function openEditStudent(id){
+  const s = STATE.students.find(x=>x.id===id); if(!s) return;
+  const events = STATE.competitions.filter(ev=>(ev.participants||[]).some(p=>p.studentId===id));
+  openModal(`
+    <h2>Edit Student</h2>
+    <label>Name</label><input type="text" id="stName" value="${esc(s.name)}">
+    <label>Category</label>
+    <select id="stCat">${STUDENT_CATEGORIES.map(c=>`<option value="${c}" ${c===s.category?'selected':''}>${c}</option>`).join('')}</select>
+    <label>Team</label>
+    <select id="stTeam">${STATE.teams.map(t=>`<option value="${t.id}" ${t.id===s.teamId?'selected':''}>${esc(t.name)}</option>`).join('')}</select>
+    <div class="small-note">Registered events: ${events.length? events.map(e=>esc(e.name)).join(', ') : 'none'}</div>
+    <div class="btnrow">
+      <button class="btn accent" onclick="saveEditStudent('${id}')">Save</button>
+      <button class="btn danger" onclick="deleteStudent('${id}')">Delete</button>
+    </div>
+  `);
+}
+async function saveEditStudent(id){
+  const name = document.getElementById('stName').value.trim();
+  const category = document.getElementById('stCat').value;
+  const teamId = document.getElementById('stTeam').value;
+  await pull('students');
+  const s = STATE.students.find(x=>x.id===id);
+  if(!s) return toast("Student no longer exists");
+  s.name = name || s.name; s.category = category; s.teamId = teamId;
+  await save('students'); closeModal(); toast("Saved"); render();
+}
+async function deleteStudent(id){
+  await pull('students'); await pull('competitions');
+  STATE.students = STATE.students.filter(s=>s.id!==id);
+  STATE.competitions.forEach(ev=> ev.participants = (ev.participants||[]).filter(p=>p.studentId!==id));
+  await save('students'); await save('competitions'); closeModal(); toast("Deleted"); render();
+}
+
+/* ---- Teams tab ---- */
+function adminTeamsHtml(){
+  return `<div class="card">` + STATE.teams.map(t=>`
+    <div class="row">
+      <div class="main"><b><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(t.color||'#999')};margin-right:6px;"></span>${esc(t.name)}</b><span>${teamStudentCount(t.id)} students · login: ${esc(t.username)}</span></div>
+      <button class="linkbtn" onclick="openEditTeam('${t.id}')">Manage</button>
+    </div>`).join('') + `</div>`;
+}
+function openEditTeam(id){
+  const t = STATE.teams.find(x=>x.id===id);
+  const roster = STATE.students.filter(s=>s.teamId===id);
+  openModal(`
+    <h2>Manage ${esc(t.name)}</h2>
+    <label>Team name</label><input type="text" id="teamName" value="${esc(t.name)}">
+    <label>Team color</label>
+    <div class="colorswatch">${TEAM_COLORS.map(c=>`<div class="sw ${t.color===c?'on':''}" style="background:${c}" onclick="document.getElementById('teamColorHidden').value='${c}';document.querySelectorAll('.colorswatch .sw').forEach(x=>x.classList.remove('on'));event.target.classList.add('on');"></div>`).join('')}
+      <input type="color" id="teamColorHidden" value="${t.color||'#e2952e'}" style="width:34px;height:34px;border:none;padding:0;background:none;"></div>
+    <label>Leader username</label><input type="text" id="teamUser" value="${esc(t.username)}">
+    <label>Leader password</label><input type="text" id="teamPass" value="${esc(t.password)}">
+    <div class="btnrow"><button class="btn accent" onclick="saveTeam('${id}')">Save</button></div>
+    <label style="margin-top:16px;">Roster (${roster.length})</label>
+    <div>${roster.length? roster.map(s=>`<span class="chip">${esc(s.name)} · ${s.category}</span>`).join('') : '<div class="small-note">No students yet</div>'}</div>
+  `);
+}
+async function saveTeam(id){
+  const name = document.getElementById('teamName').value.trim();
+  const color = document.getElementById('teamColorHidden').value;
+  const username = document.getElementById('teamUser').value.trim();
+  const password = document.getElementById('teamPass').value.trim();
+  await pull('teams');
+  const t = STATE.teams.find(x=>x.id===id);
+  if(!t) return toast("Team no longer exists");
+  t.name = name || t.name; t.color = color || t.color; t.username = username || t.username; t.password = password || t.password;
+  await save('teams'); closeModal(); toast("Team updated"); render();
+}
+
+/* ---- Events tab ---- */
+function adminEventsHtml(){
+  const q=(SESSION.adminEventSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  return `
+    <div class="searchbar"><input type="text" placeholder="Search events…" value="${esc(SESSION.adminEventSearch||'')}" oninput="SESSION.adminEventSearch=this.value;renderEventsListOnly();"></div>
+    <button class="btn accent" style="margin-bottom:12px;" onclick="openAddEvent()">+ Add Event</button>
+    <div id="eventsListWrap">${list.length? list.map(ev=>eventCardHtml(ev)).join('') : '<div class="empty">No events found</div>'}</div>
+  `;
+}
+function renderEventsListOnly(){
+  const q=(SESSION.adminEventSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  document.getElementById('eventsListWrap').innerHTML = list.length? list.map(ev=>eventCardHtml(ev)).join('') : '<div class="empty">No events found</div>';
+}
+function statusPillPlain(ev){
+  if(ev.status==='ended') return 'Ended';
+  if(ev.status==='started') return 'Live now';
+  return 'Not started yet';
+}
+function statusPill(ev){
+  if(ev.status==='ended') return '<span class="pill grey">Ended</span>';
+  if(ev.status==='started') return '<span class="pill danger">Live</span>';
+  return '<span class="pill">Scheduled</span>';
+}
+function eventCardHtml(ev){
+  const count = (ev.participants||[]).length;
+  const when = [ev.eventDate, ev.eventTime].filter(Boolean).join(' ');
+  return `<div class="card">
+    <h3>${esc(ev.name)} ${statusPill(ev)}</h3>
+    <div class="small-note">${ev.category} · max ${ev.maxPerTeam}/team${ev.maxTotal? ' · max '+ev.maxTotal+' total':''} · ${count} registered</div>
+    <div class="small-note">${when? '🗓 '+esc(when):''}${ev.stage? ' · 📍 '+esc(ev.stage):''}</div>
+    <div class="btnrow">
+      ${ev.status==='scheduled'? `<button class="btn good small" onclick="startEvent('${ev.id}')">Start</button>`:''}
+      ${ev.status==='started'? `<button class="btn danger small" onclick="endEvent('${ev.id}')">End</button>`:''}
+      <button class="btn outline small" onclick="openEventMarks('${ev.id}')">Results</button>
+      <button class="btn outline small" onclick="openEventEdit('${ev.id}')">Edit</button>
+    </div>
+  </div>`;
+}
+function openAddEvent(){
+  openModal(`
+    <h2>Add Event</h2>
+    <label>Name</label><input type="text" id="evName">
+    <label>Category</label><select id="evCat">${CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    <label>Max participants per team</label><input type="number" id="evMax" value="1" min="1">
+    <label>Max total participants (overall, optional)</label><input type="number" id="evMaxTotal" min="1">
+    <label>Date</label><input type="date" id="evDate">
+    <label>Time</label><input type="text" id="evTime" placeholder="e.g. 10:30 AM">
+    <label>Stage</label><input type="text" id="evStage" placeholder="e.g. Main Stage">
+    <div class="btnrow"><button class="btn accent" onclick="saveNewEvent()">Add</button></div>
+  `);
+}
+async function saveNewEvent(){
+  const name = document.getElementById('evName').value.trim();
+  if(!name) return toast("Enter event name");
+  const newEv = {id:uid(), name, category:document.getElementById('evCat').value, maxPerTeam:Number(document.getElementById('evMax').value)||1, maxTotal:Number(document.getElementById('evMaxTotal').value)||null, eventDate:document.getElementById('evDate').value, eventTime:document.getElementById('evTime').value.trim(), stage:document.getElementById('evStage').value.trim(), status:'scheduled', participants:[], generalMarks:{}};
+  await pull('competitions');
+  STATE.competitions.push(newEv);
+  await save('competitions'); closeModal(); toast("Event added"); render();
+}
+function openEventEdit(id){
+  const ev = STATE.competitions.find(e=>e.id===id);
+  openModal(`
+    <h2>Edit Event</h2>
+    <label>Name</label><input type="text" id="evName" value="${esc(ev.name)}">
+    <label>Category</label><select id="evCat">${CATEGORIES.map(c=>`<option value="${c}" ${c===ev.category?'selected':''}>${c}</option>`).join('')}</select>
+    <label>Max participants per team</label><input type="number" id="evMax" value="${ev.maxPerTeam}" min="1">
+    <label>Max total participants (overall, optional)</label><input type="number" id="evMaxTotal" value="${ev.maxTotal||''}" min="1">
+    <label>Date</label><input type="date" id="evDate" value="${esc(ev.eventDate||'')}">
+    <label>Time</label><input type="text" id="evTime" value="${esc(ev.eventTime||'')}">
+    <label>Stage</label><input type="text" id="evStage" value="${esc(ev.stage||'')}">
+    <div class="btnrow">
+      <button class="btn accent" onclick="saveEventEdit('${id}')">Save</button>
+      <button class="btn danger" onclick="deleteEvent('${id}')">Delete</button>
+    </div>
+    <label style="margin-top:14px;">Registered students</label>
+    ${(ev.participants||[]).length? ev.participants.map(p=>{const st=STATE.students.find(s=>s.id===p.studentId); return st? `<div class="row"><div class="main"><b>${esc(st.name)}</b><span>${teamName(st.teamId)}${p.chestNumber? ' · #'+esc(p.chestNumber):''}</span></div><button class="linkbtn" onclick="removeParticipant('${id}','${p.studentId}')">Remove</button></div>`:'';}).join('') : '<div class="small-note">None yet</div>'}
+    <button class="btn outline small" style="margin-top:8px;" onclick="openAddParticipant('${id}')">+ Add student</button>
+  `);
+}
+async function saveEventEdit(id){
+  const name=document.getElementById('evName').value.trim(), category=document.getElementById('evCat').value;
+  const maxPerTeam=Number(document.getElementById('evMax').value)||1, maxTotal=Number(document.getElementById('evMaxTotal').value)||null;
+  const eventDate=document.getElementById('evDate').value, eventTime=document.getElementById('evTime').value.trim(), stage=document.getElementById('evStage').value.trim();
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(!ev) return toast("Event no longer exists");
+  ev.name=name||ev.name; ev.category=category; ev.maxPerTeam=maxPerTeam; ev.maxTotal=maxTotal; ev.eventDate=eventDate; ev.eventTime=eventTime; ev.stage=stage;
+  await save('competitions'); closeModal(); toast("Saved"); render();
+}
+async function deleteEvent(id){
+  await pull('competitions');
+  STATE.competitions = STATE.competitions.filter(e=>e.id!==id);
+  await save('competitions'); closeModal(); toast("Deleted"); render();
+}
+function startEvent(id){
+  const ev = STATE.competitions.find(e=>e.id===id);
+  const parts = ev.participants||[];
+  openModal(`
+    <h2>Start ${esc(ev.name)}</h2>
+    <div class="sub">Give a chest number to each student added by team leaders, then start.</div>
+    ${parts.length? parts.map(p=>{
+      const st = STATE.students.find(s=>s.id===p.studentId);
+      if(!st) return '';
+      return `<label>${esc(st.name)} <span style="font-weight:400;color:#8a8980;">(${teamName(st.teamId)})</span></label><input type="text" id="cn_${p.studentId}" value="${esc(p.chestNumber||'')}" placeholder="Chest number">`;
+    }).join('') : '<div class="small-note">No students registered yet — you can still start.</div>'}
+    <div class="btnrow"><button class="btn good" onclick="confirmStartEvent('${id}')">Start Event</button></div>
+  `);
+}
+async function confirmStartEvent(id){
+  const chestValues = {};
+  document.querySelectorAll('[id^="cn_"]').forEach(el=>{ chestValues[el.id.slice(3)] = el.value.trim(); });
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(!ev) return toast("Event no longer exists");
+  (ev.participants||[]).forEach(p=>{ if(chestValues[p.studentId]!=null) p.chestNumber = chestValues[p.studentId]; });
+  ev.status='started';
+  await pull('notifications');
+  STATE.notifications.unshift({id:uid(), text:`${ev.name} has started!`, time:Date.now()});
+  await save('competitions'); await save('notifications'); closeModal(); toast("Event started · leaders notified"); render();
+}
+async function endEvent(id){
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(!ev) return toast("Event no longer exists");
+  ev.status='ended';
+  await save('competitions'); toast("Event ended"); render();
+}
+function openAddParticipant(evId){
+  const ev = STATE.competitions.find(e=>e.id===evId);
+  const eligible = STATE.students.filter(s=> ev.category==='General' || s.category===ev.category).filter(s=>!(ev.participants||[]).some(p=>p.studentId===s.id));
+  openModal(`
+    <h2>Add Student to ${esc(ev.name)}</h2>
+    <select id="addPStudent">${eligible.map(s=>`<option value="${s.id}">${esc(s.name)} (${teamName(s.teamId)})</option>`).join('')}</select>
+    <div class="btnrow"><button class="btn accent" onclick="confirmAddParticipant('${evId}')">Add</button></div>
+  `);
+}
+async function confirmAddParticipant(evId){
+  const sid = document.getElementById('addPStudent').value;
+  await pull('competitions'); await pull('students');
+  const r = tryRegister(evId, sid);
+  if(!r.ok) return toast(r.msg);
+  await save('competitions'); closeModal(); toast("Added"); render();
+}
+async function removeParticipant(evId, sid){
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===evId);
+  if(!ev) return toast("Event no longer exists");
+  ev.participants = (ev.participants||[]).filter(p=>p.studentId!==sid);
+  await save('competitions'); closeModal(); toast("Removed"); openEventEdit(evId);
+}
+// shared registration rule-check used by admin & leader
+function tryRegister(evId, sid){
+  const ev = STATE.competitions.find(e=>e.id===evId);
+  const st = STATE.students.find(s=>s.id===sid);
+  if(!ev || !st) return {ok:false,msg:"Not found"};
+  if(ev.status==='ended') return {ok:false,msg:"Event already ended"};
+  if(STATE.settings.registrationDeadline){
+    const now = new Date();
+    if(now > new Date(STATE.settings.registrationDeadline)) return {ok:false,msg:"Registration deadline has passed"};
+  }
+  if(ev.category!=='General' && st.category!==ev.category) return {ok:false,msg:"Category doesn't match"};
+  const teamCount = (ev.participants||[]).filter(p=>{const s2=STATE.students.find(x=>x.id===p.studentId); return s2 && s2.teamId===st.teamId;}).length;
+  if(teamCount>=ev.maxPerTeam) return {ok:false,msg:"Team limit reached for this event"};
+  if(ev.maxTotal && (ev.participants||[]).length>=ev.maxTotal) return {ok:false,msg:"Event has reached its max total participants"};
+  if(ev.category!=='General'){
+    const studentEventCount = STATE.competitions.filter(e=>e.category!=='General' && (e.participants||[]).some(p=>p.studentId===sid)).length;
+    if(studentEventCount>=STATE.settings.maxEventsPerStudent) return {ok:false,msg:`Student already has ${STATE.settings.maxEventsPerStudent} events`};
+  }
+  ev.participants = ev.participants||[];
+  ev.participants.push({studentId:sid, marks:null});
+  return {ok:true};
+}
+
+function openEventMarks(id){
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(ev.category==='General'){
+    openModal(`
+      <h2>${esc(ev.name)} — Team marks</h2>
+      <div class="sub">General category: enter one combined total for each team that took part.</div>
+      ${STATE.teams.map(t=>`<label>${esc(t.name)}</label><input type="number" id="gm_${t.id}" value="${ev.generalMarks && ev.generalMarks[t.id]!=null? ev.generalMarks[t.id]:''}">`).join('')}
+      <div class="btnrow"><button class="btn accent" onclick="saveGeneralMarks('${id}')">Save marks</button></div>
+    `);
+  } else {
+    const rows = (ev.participants||[]).map(p=>{
+      const st = STATE.students.find(s=>s.id===p.studentId);
+      if(!st) return '';
+      return `<div class="card">
+        <b>${esc(st.name)}</b> <span style="font-weight:400;color:#8a8980;font-size:12.5px;">(${teamName(st.teamId)}${p.chestNumber? ' · #'+esc(p.chestNumber):''})</span>
+        <label>Grade</label>
+        <select id="gr_${p.studentId}">
+          <option value="">—</option>
+          ${['A Grade','B Grade','C Grade','No Grade'].map(g=>`<option value="${g}" ${p.grade===g?'selected':''}>${g}</option>`).join('')}
+        </select>
+        <label>Position</label><input type="text" id="ps_${p.studentId}" value="${esc(p.position||'')}" placeholder="e.g. 1st">
+        <label>Marks</label><input type="number" id="mk_${p.studentId}" value="${p.marks!=null?p.marks:''}">
+      </div>`;
+    }).join('');
+    openModal(`
+      <h2>${esc(ev.name)} — Results</h2>
+      ${rows || '<div class="small-note">No participants yet</div>'}
+      ${rows? `<div class="btnrow"><button class="btn accent" onclick="saveIndividualMarks('${id}')">Save results</button></div>`:''}
+    `);
+  }
+}
+async function saveGeneralMarks(id){
+  const values = {};
+  STATE.teams.forEach(t=>{ values[t.id] = document.getElementById('gm_'+t.id).value; });
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(!ev) return toast("Event no longer exists");
+  ev.generalMarks = ev.generalMarks || {};
+  STATE.teams.forEach(t=>{ ev.generalMarks[t.id] = values[t.id]===''? 0 : Number(values[t.id]); });
+  await save('competitions'); closeModal(); toast("Marks saved (draft — publish to make visible)"); render();
+}
+async function saveIndividualMarks(id){
+  const evNow = STATE.competitions.find(e=>e.id===id);
+  const values = {};
+  (evNow.participants||[]).forEach(p=>{
+    const mk=document.getElementById('mk_'+p.studentId), gr=document.getElementById('gr_'+p.studentId), ps=document.getElementById('ps_'+p.studentId);
+    values[p.studentId] = { marks: mk && mk.value!==''? Number(mk.value): null, grade: gr? (gr.value||null): null, position: ps? (ps.value.trim()||null): null };
+  });
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===id);
+  if(!ev) return toast("Event no longer exists");
+  (ev.participants||[]).forEach(p=>{ const v = values[p.studentId]; if(v){ p.marks=v.marks; p.grade=v.grade; p.position=v.position; } });
+  await save('competitions'); closeModal(); toast("Results saved (draft — publish to make visible)"); render();
+}
+
+/* ---- More tab: posters, toppers, messages, settings ---- */
+function adminMoreHtml(){
+  const sub = SESSION.adminMoreTab || 'results';
+  return `
+    <div class="tabs">
+      ${[['results','Results'],['posters','Posters'],['toppers','Toppers'],['messages','Messages'],['settings','Settings']].map(([id,l])=>`<button class="tab ${sub===id?'active':''}" onclick="SESSION.adminMoreTab='${id}';render();">${l}</button>`).join('')}
+    </div>
+    ${sub==='results'?adminResultsHtml(): sub==='posters'?adminPostersHtml(): sub==='toppers'?adminToppersHtml(): sub==='messages'?adminMessagesHtml(): adminSettingsHtml()}
+  `;
+}
+function adminResultsHtml(){
+  const q=(SESSION.adminResultsSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  return `
+    <div class="searchbar"><input type="text" placeholder="Search an event to add its result…" value="${esc(SESSION.adminResultsSearch||'')}" oninput="SESSION.adminResultsSearch=this.value;render();"></div>
+    <div class="card"><h3>Publish results <button class="linkbtn" onclick="publishResults()">Publish now</button></h3><div class="small-note">Only after publishing do students &amp; leaders see results. Nothing new shows until you publish again.</div></div>
+    ${list.length? list.map(ev=>{
+      const count=(ev.participants||[]).length;
+      const done = ev.category==='General'? Object.keys(ev.generalMarks||{}).length>0 : (ev.participants||[]).some(p=>p.marks!=null);
+      return `<div class="card"><h3>${esc(ev.name)} ${statusPill(ev)}</h3>
+      <div class="small-note">${ev.category} · ${count} registered ${done? '· <span style="color:var(--good);">results entered</span>':''}</div>
+      <button class="btn outline small" style="margin-top:8px;" onclick="openEventMarks('${ev.id}')">${done?'Edit result':'Add result'}</button>
+      </div>`;
+    }).join('') : '<div class="empty">No events found</div>'}
+  `;
+}
+/* posters */
+function adminPostersHtml(){
+  return `
+    <button class="btn accent" style="margin-bottom:12px;" onclick="openAddPoster()">+ Add Poster</button>
+    ${STATE.posters.length? STATE.posters.map(p=>`
+      <div class="card">
+        <img class="poster-img" src="${p.url}">
+        <div class="row"><div class="main"><b>${esc(p.caption||'Poster')}</b><span>${p.published? 'Published':'Draft'}</span></div>
+        <div style="display:flex;gap:8px;">
+          <a class="linkbtn" download="poster.jpg" href="${p.url}">Download</a>
+          <button class="linkbtn" onclick="togglePoster('${p.id}')">${p.published?'Unpublish':'Publish'}</button>
+          <button class="linkbtn" onclick="deletePoster('${p.id}')">Delete</button>
+        </div></div>
+      </div>`).join('') : '<div class="empty">No posters yet</div>'}
+  `;
+}
+function openAddPoster(){
+  openModal(`
+    <h2>Add Poster</h2>
+    <label>Image</label><input type="file" id="posterFile" accept="image/*">
+    <label>Caption</label><input type="text" id="posterCaption">
+    <div class="btnrow"><button class="btn accent" onclick="saveNewPoster()">Add</button></div>
+    <div class="small-note">Tip: use a compressed image (under ~1MB) so it loads fast on everyone's phone.</div>
+  `);
+}
+function saveNewPoster(){
+  const file = document.getElementById('posterFile').files[0];
+  const caption = document.getElementById('posterCaption').value.trim();
+  if(!file) return toast("Choose an image");
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    await pull('posters');
+    STATE.posters.unshift({id:uid(), url:reader.result, caption, published:false});
+    await save('posters'); closeModal(); toast("Poster added"); render();
+  };
+  reader.readAsDataURL(file);
+}
+async function togglePoster(id){
+  await pull('posters');
+  const p = STATE.posters.find(x=>x.id===id);
+  if(!p) return toast("Poster no longer exists");
+  p.published=!p.published;
+  await save('posters'); render();
+}
+async function deletePoster(id){
+  await pull('posters');
+  STATE.posters = STATE.posters.filter(p=>p.id!==id);
+  await save('posters'); render();
+}
+/* toppers */
+function computeToppers(source){
+  // source: 'draft' uses live marks, 'published' uses last-published snapshot
+  const scores = {};
+  if(source==='draft'){
+    STATE.competitions.forEach(ev=>{
+      if(ev.category==='General') return;
+      (ev.participants||[]).forEach(p=>{ if(p.marks) scores[p.studentId]=(scores[p.studentId]||0)+Number(p.marks); });
+    });
+  } else {
+    Object.keys(STATE.published.results||{}).forEach(key=>{
+      if(key.endsWith('_general')) return;
+      (STATE.published.results[key]||[]).forEach(p=>{ if(p.marks) scores[p.studentId]=(scores[p.studentId]||0)+Number(p.marks); });
+    });
+  }
+  return Object.keys(scores).map(sid=>{
+    const st = STATE.students.find(s=>s.id===sid);
+    return st? {name:st.name, team:teamName(st.teamId), score:scores[sid]} : null;
+  }).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,5);
+}
+function adminToppersHtml(){
+  const top = computeToppers('draft');
+  return `
+    <div class="card">
+      <h3>Toppers slide visibility</h3>
+      <div class="row"><div class="main"><b>${STATE.settings.toppersHidden?'Hidden from everyone':'Visible to everyone'}</b></div>
+      <button class="btn small ${STATE.settings.toppersHidden?'good':'danger'}" onclick="toggleToppersLock()">${STATE.settings.toppersHidden?'Unlock / Show':'Lock / Hide'}</button></div>
+      <div class="small-note">Toppers are calculated automatically from marks — nothing to add manually. This list is the live (draft) picture; students only see the published version once you publish results.</div>
+    </div>
+    ${top.length? top.map((t,i)=>`<div class="row card"><div class="main"><b>${i+1}. ${esc(t.name)}</b><span>${esc(t.team)}</span></div><div class="pill accent">${t.score}</div></div>`).join('') : '<div class="empty">No marks entered yet</div>'}
+  `;
+}
+function toggleToppersLock(){
+  openModal(`
+    <h2>Confirm admin password</h2>
+    <input type="password" id="toppersLockPw">
+    <div class="btnrow"><button class="btn accent" onclick="confirmToppersLock()">Confirm</button></div>
+  `);
+}
+async function confirmToppersLock(){
+  const v = document.getElementById('toppersLockPw').value;
+  await pull('settings');
+  if(v!==STATE.settings.adminPassword) return toast("Wrong password");
+  STATE.settings.toppersHidden = !STATE.settings.toppersHidden;
+  await save('settings'); closeModal(); toast("Updated"); render();
+}
+/* messages */
+function adminMessagesHtml(){
+  if(!STATE.messages.length) return '<div class="empty">No messages from leaders yet</div>';
+  return STATE.messages.slice().reverse().map(m=>`
+    <div class="card">
+      <div class="small-note">${esc(teamName(m.teamId))}</div>
+      <div style="margin:4px 0;">${esc(m.text)}</div>
+      ${m.reply? `<div style="background:var(--cement-2);padding:8px 10px;border-radius:8px;font-size:13px;"><b>You replied:</b> ${esc(m.reply)}</div>` : `<button class="linkbtn" onclick="openReply('${m.id}')">Reply</button>`}
+    </div>`).join('');
+}
+function openAdminMessagesQuick(){ currentAdminTab='more'; SESSION.adminMoreTab='messages'; render(); }
+function openReply(id){
+  openModal(`<h2>Reply</h2><textarea id="replyText" rows="3"></textarea><div class="btnrow"><button class="btn accent" onclick="sendReply('${id}')">Send</button></div>`);
+}
+async function sendReply(id){
+  const text = document.getElementById('replyText').value.trim();
+  await pull('messages');
+  const m = STATE.messages.find(x=>x.id===id);
+  if(!m) return toast("Message no longer exists");
+  m.reply = text;
+  await save('messages'); closeModal(); toast("Reply sent"); render();
+}
+/* settings */
+function adminSettingsHtml(){
+  const swatches = ["#e2952e","#c1443a","#3f7d54","#3c6e8f","#8654a6","#20211d"];
+  return `
+    <div class="searchbar"><input type="text" placeholder="Search students, events, teams…" oninput="adminGlobalSearch(this.value)"></div>
+    <div id="globalSearchResults"></div>
+    <div class="card">
+      <h3>Theme color</h3>
+      <div class="colorswatch">${swatches.map(c=>`<div class="sw ${STATE.settings.siteColor===c?'on':''}" style="background:${c}" onclick="setThemeColor('${c}')"></div>`).join('')}
+        <input type="color" value="${STATE.settings.siteColor}" onchange="setThemeColor(this.value)" style="width:34px;height:34px;border:none;padding:0;background:none;">
+      </div>
+    </div>
+    <div class="card">
+      <h3>Admin login</h3>
+      <label>Username</label>
+      <input type="text" id="newAdminUser" value="${esc(STATE.settings.adminUsername)}">
+      <label>Password</label>
+      <input type="password" id="newAdminPw" placeholder="Leave blank to keep current">
+      <div class="btnrow"><button class="btn accent" onclick="changeAdminPw()">Update login</button></div>
+    </div>
+    <div class="card">
+      <h3>Registration rules</h3>
+      <label>Max events per student (doesn't apply to General)</label>
+      <input type="number" id="maxEv" value="${STATE.settings.maxEventsPerStudent}">
+      <label>Registration deadline</label>
+      <input type="datetime-local" id="regDeadline" value="${STATE.settings.registrationDeadline||''}">
+      <div class="btnrow"><button class="btn accent" onclick="saveRules()">Save</button></div>
+    </div>
+  `;
+}
+async function setThemeColor(c){
+  await pull('settings');
+  STATE.settings.siteColor = c; await save('settings'); applyTheme(); toast("Theme updated"); render();
+}
+async function changeAdminPw(){
+  const u = document.getElementById('newAdminUser').value.trim();
+  const v = document.getElementById('newAdminPw').value.trim();
+  if(!u) return toast("Enter a username");
+  await pull('settings');
+  STATE.settings.adminUsername = u;
+  if(v) STATE.settings.adminPassword = v;
+  await save('settings'); toast("Admin login updated"); render();
+}
+async function saveRules(){
+  const maxEv = Number(document.getElementById('maxEv').value)||3;
+  const deadline = document.getElementById('regDeadline').value;
+  await pull('settings');
+  STATE.settings.maxEventsPerStudent = maxEv;
+  STATE.settings.registrationDeadline = deadline;
+  await save('settings'); toast("Saved"); render();
+}
+function adminGlobalSearch(q){
+  q=q.toLowerCase();
+  const box = document.getElementById('globalSearchResults');
+  if(!q){ box.innerHTML=''; return; }
+  const s = STATE.students.filter(x=>x.name.toLowerCase().includes(q)).slice(0,5);
+  const e = STATE.competitions.filter(x=>x.name.toLowerCase().includes(q)).slice(0,5);
+  const t = STATE.teams.filter(x=>x.name.toLowerCase().includes(q)).slice(0,5);
+  box.innerHTML = `<div class="card">
+    ${s.length?`<b style="font-size:12px;">Students</b>`+s.map(x=>`<div class="row"><div class="main"><b>${esc(x.name)}</b></div></div>`).join(''):''}
+    ${e.length?`<b style="font-size:12px;">Events</b>`+e.map(x=>`<div class="row"><div class="main"><b>${esc(x.name)}</b></div></div>`).join(''):''}
+    ${t.length?`<b style="font-size:12px;">Teams</b>`+t.map(x=>`<div class="row"><div class="main"><b>${esc(x.name)}</b></div></div>`).join(''):''}
+    ${(!s.length&&!e.length&&!t.length)?'<div class="small-note">No matches</div>':''}
+  </div>`;
+}
+
+/* ============================================================
+   LEADER
+============================================================ */
+function renderLeader(){
+  const team = STATE.teams.find(t=>t.id===SESSION.teamId);
+  setTopbar(team? team.name : "Team Leader", `<button class="iconbtn" onclick="refreshNow()">🔄</button><button class="iconbtn" onclick="switchLeaderTab('notify')">🔔${STATE.notifications.length?`<span class="badge">${STATE.notifications.length}</span>`:''}</button><button class="iconbtn" onclick="logout()">⎋</button>`);
+  setBottomNav([
+    {id:'roster',icon:'🧑‍🤝‍🧑',label:'My Team'},
+    {id:'register',icon:'📋',label:'Register'},
+    {id:'events',icon:'🏆',label:'Events'},
+    {id:'messages',icon:'💬',label:'Messages'},
+    {id:'account',icon:'⚙️',label:'Account'},
+  ], currentLeaderTab, 'switchLeaderTab');
+  const c = document.getElementById('content');
+  if(currentLeaderTab==='roster') c.innerHTML = leaderRosterHtml(team);
+  else if(currentLeaderTab==='register') c.innerHTML = leaderRegisterHtml(team);
+  else if(currentLeaderTab==='events') c.innerHTML = leaderEventsHtml();
+  else if(currentLeaderTab==='messages') c.innerHTML = leaderMessagesHtml(team);
+  else if(currentLeaderTab==='notify') c.innerHTML = leaderNotifyHtml();
+  else c.innerHTML = leaderAccountHtml(team);
+}
+function switchLeaderTab(id){ currentLeaderTab=id; render(); }
+
+function leaderRosterHtml(team){
+  const q=(SESSION.leaderRosterSearch||'').toLowerCase();
+  const roster = STATE.students.filter(s=>s.teamId===team.id && s.name.toLowerCase().includes(q));
+  const pts = STATE.published.teamPoints[team.id];
+  return `
+    <div class="card"><h3>Published team points</h3><div class="pill accent" style="font-size:16px;padding:8px 14px;">${pts!=null? pts : '—'}</div></div>
+    <div class="searchbar"><input type="text" placeholder="Search my team's students…" value="${esc(SESSION.leaderRosterSearch||'')}" oninput="SESSION.leaderRosterSearch=this.value;render();"></div>
+    ${roster.length? `<div class="card">`+roster.map(s=>{
+      const events = STATE.competitions.filter(ev=>(ev.participants||[]).some(p=>p.studentId===s.id));
+      return `<div class="row"><div class="main"><b>${esc(s.name)}</b><span>${s.category}${events.length? ' · '+events.map(e=>e.name).join(', '):''}</span></div></div>`;
+    }).join('')+`</div>` : '<div class="empty">No students in your team yet — ask admin to add them</div>'}
+  `;
+}
+function pastDeadline(){
+  if(!STATE.settings.registrationDeadline) return false;
+  return new Date() > new Date(STATE.settings.registrationDeadline);
+}
+function leaderRegisterHtml(team){
+  const openEvents = STATE.competitions.filter(e=>e.status!=='ended');
+  const locked = pastDeadline();
+  return `
+    ${locked? '<div class="card"><div class="small-note">Registration deadline has passed — you can view your list but can\'t add or remove students anymore.</div></div>':''}
+    ${openEvents.length? openEvents.map(ev=>{
+      const mine = (ev.participants||[]).filter(p=>{const s=STATE.students.find(x=>x.id===p.studentId); return s && s.teamId===team.id;});
+      return `<div class="card">
+        <h3>${esc(ev.name)} ${statusPill(ev)}</h3>
+        <div class="small-note">${ev.category} · your team: ${mine.length}/${ev.maxPerTeam}</div>
+        ${mine.length? mine.map(p=>{const s=STATE.students.find(x=>x.id===p.studentId); return `<div class="row"><div class="main"><b>${esc(s.name)}</b></div>${!locked && ev.status==='scheduled'? `<button class="linkbtn" onclick="leaderRemoveParticipant('${ev.id}','${p.studentId}')">Remove</button>`:''}</div>`;}).join('') : ''}
+        <button class="btn outline small" style="margin-top:8px;" onclick="openLeaderRegister('${ev.id}')" ${(mine.length>=ev.maxPerTeam || locked || ev.status!=='scheduled')?'disabled':''}>+ Register a student</button>
+      </div>`;
+    }).join('') : '<div class="empty">No open events</div>'}
+  `;
+}
+async function leaderRemoveParticipant(evId, sid){
+  if(pastDeadline()) return toast("Deadline has passed");
+  await pull('competitions');
+  const ev = STATE.competitions.find(e=>e.id===evId);
+  if(!ev) return toast("Event no longer exists");
+  ev.participants = (ev.participants||[]).filter(p=>p.studentId!==sid);
+  await save('competitions'); toast("Removed"); render();
+}
+function openLeaderRegister(evId){
+  const ev = STATE.competitions.find(e=>e.id===evId);
+  const team = STATE.teams.find(t=>t.id===SESSION.teamId);
+  const eligible = STATE.students.filter(s=>s.teamId===team.id && (ev.category==='General' || s.category===ev.category)).filter(s=>!(ev.participants||[]).some(p=>p.studentId===s.id));
+  if(!eligible.length) return toast("No eligible students to add");
+  openModal(`
+    <h2>Register for ${esc(ev.name)}</h2>
+    <select id="lregStudent">${eligible.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+    <div class="btnrow"><button class="btn accent" onclick="confirmLeaderRegister('${evId}')">Register</button></div>
+  `);
+}
+async function confirmLeaderRegister(evId){
+  const sid = document.getElementById('lregStudent').value;
+  await pull('competitions'); await pull('students');
+  const r = tryRegister(evId, sid);
+  if(!r.ok) return toast(r.msg);
+  await save('competitions'); closeModal(); toast("Registered"); render();
+}
+function leaderEventsHtml(){
+  const q=(SESSION.leaderEventSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  return `
+    <div class="searchbar"><input type="text" placeholder="Search events…" value="${esc(SESSION.leaderEventSearch||'')}" oninput="SESSION.leaderEventSearch=this.value;render();"></div>
+    ${list.length? list.map(ev=>`<div class="card"><h3>${esc(ev.name)} ${statusPill(ev)}</h3><div class="small-note">${ev.category} · max ${ev.maxPerTeam}/team</div></div>`).join('') : '<div class="empty">No events found</div>'}
+  `;
+}
+function leaderMessagesHtml(team){
+  const mine = STATE.messages.filter(m=>m.teamId===team.id);
+  return `
+    <div class="card">
+      <h3>Message admin</h3>
+      <textarea id="leaderMsgText" rows="2" placeholder="Type a message…"></textarea>
+      <div class="btnrow"><button class="btn accent" onclick="sendLeaderMessage('${team.id}')">Send</button></div>
+    </div>
+    ${mine.length? mine.slice().reverse().map(m=>`
+      <div class="card">
+        <div>${esc(m.text)}</div>
+        ${m.reply? `<div style="background:var(--cement-2);padding:8px 10px;border-radius:8px;font-size:13px;margin-top:6px;"><b>Admin:</b> ${esc(m.reply)}</div>` : '<div class="small-note">Waiting for reply…</div>'}
+      </div>`).join('') : '<div class="empty">No messages yet</div>'}
+  `;
+}
+async function sendLeaderMessage(teamId){
+  const text = document.getElementById('leaderMsgText').value.trim();
+  if(!text) return toast("Type a message");
+  await pull('messages');
+  STATE.messages.push({id:uid(), teamId, text, reply:null});
+  await save('messages'); toast("Message sent"); render();
+}
+function leaderNotifyHtml(){
+  return STATE.notifications.length? STATE.notifications.map(n=>`<div class="row card"><div class="notedot"></div><div class="main" style="margin-left:8px;"><b>${esc(n.text)}</b><span>${new Date(n.time).toLocaleString()}</span></div></div>`).join('') : '<div class="empty">No notifications</div>';
+}
+function leaderAccountHtml(team){
+  return `
+    <div class="card">
+      <h3>Change password</h3>
+      <label>New password</label><input type="text" id="lNewPass" placeholder="Enter a new password">
+      <div class="btnrow"><button class="btn accent" onclick="saveLeaderAccount('${team.id}')">Save</button></div>
+    </div>
+  `;
+}
+async function saveLeaderAccount(id){
+  const p = document.getElementById('lNewPass').value.trim();
+  if(!p) return toast("Enter a new password");
+  await pull('teams');
+  const t = STATE.teams.find(x=>x.id===id);
+  if(!t) return toast("Team no longer exists");
+  t.password = p;
+  await save('teams'); toast("Password updated"); render();
+}
+
+/* ============================================================
+   STUDENT
+============================================================ */
+function renderStudent(){
+  setTopbar("Student", `<button class="iconbtn" onclick="refreshNow()">🔄</button><button class="iconbtn" onclick="logout()">⎋</button>`);
+  document.getElementById('bottomnav').style.display='none';
+  document.getElementById('bottomnav').innerHTML='';
+  const c = document.getElementById('content');
+  let matches = [];
+  if(SESSION.studentQuery && SESSION.studentQuery.length>0){
+    matches = STATE.students.filter(s=>s.name.toLowerCase().includes(SESSION.studentQuery.toLowerCase()));
+  }
+  const posters = STATE.posters.filter(p=>p.published);
+  const pubToppers = computeToppers('published');
+  const toppersBlock = (!STATE.settings.toppersHidden && pubToppers.length) ? `
+    <div class="card"><h3>🏅 Toppers</h3>${pubToppers.map((t,i)=>`<div class="row"><div class="main"><b>${i+1}. ${esc(t.name)}</b><span>${esc(t.team)}</span></div><div class="pill accent">${t.score}</div></div>`).join('')}</div>` : '';
+  c.innerHTML = `
+    <div class="searchbar"><input type="text" placeholder="Type your name…" value="${esc(SESSION.studentQuery||'')}" oninput="SESSION.studentQuery=this.value;render();"></div>
+    ${SESSION.studentQuery ? (matches.length? matches.map(s=>studentCardHtml(s)).join('') : '<div class="empty">No student found with that name</div>') : ''}
+    ${toppersBlock}
+    <div class="card"><h3>📢 Posters</h3>${posters.length? posters.map(p=>`<img class="poster-img" src="${p.url}"><a class="btn outline small" download="poster.jpg" href="${p.url}" style="margin-bottom:10px;">Download</a>`).join('') : '<div class="small-note">No posters published yet</div>'}</div>
+  `;
+}
+function studentCardHtml(s){
+  const events = STATE.competitions.filter(ev=>(ev.participants||[]).some(p=>p.studentId===s.id));
+  const pts = STATE.published.teamPoints[s.teamId];
+  return `<div class="card">
+    <h3>${esc(s.name)}</h3>
+    <div class="small-note">${s.category} · ${teamName(s.teamId)}</div>
+    <label>Events</label>
+    ${events.length? events.map(ev=>{
+      const pubList = STATE.published.results ? STATE.published.results[ev.id] : null;
+      const pubEntry = pubList ? pubList.find(p=>p.studentId===s.id) : null;
+      let detail = statusPillPlain(ev);
+      if(pubEntry && (pubEntry.grade||pubEntry.position||pubEntry.marks!=null)){
+        detail += ' · ' + [pubEntry.grade, pubEntry.position? 'Pos '+pubEntry.position:null, pubEntry.marks!=null? pubEntry.marks+' marks':null].filter(Boolean).join(', ');
+      } else if(ev.status==='ended'){
+        detail += ' · result pending publish';
+      }
+      return `<div class="row"><div class="main"><b>${esc(ev.name)}</b><span>${detail}</span></div></div>`;
+    }).join('') : '<div class="small-note">No events registered</div>'}
+    <label>Team's published points</label>
+    <div class="pill accent">${pts!=null? pts : 'Not published yet'}</div>
+  </div>`;
+}
+
+/* ---------------- util ---------------- */
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------------- boot ---------------- */
+(async function boot(){
+  await loadAll();
+  render();
+  // Keep everyone's screen in sync: quietly re-fetch shared data every
+  // few seconds and re-render, unless a modal is open or the user is
+  // actively typing (so we never yank the keyboard focus away).
+  setInterval(async ()=>{
+    const modalOpen = document.getElementById('overlay').classList.contains('show');
+    const typing = document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+    if(modalOpen || typing) return;
+    try{ await loadAll(); render(); }catch(e){ /* ignore transient errors */ }
+  }, 10000);
+})();
+
+</script>
+</body>
+</html>
