@@ -1056,7 +1056,59 @@ function adminSettingsHtml(){
       <input type="file" id="restoreFile" accept="application/json">
       <div class="btnrow"><button class="btn danger" onclick="importBackup()">Restore (overwrites current data)</button></div>
     </div>
+    <div class="card">
+      <h3>Clear All Data</h3>
+      <div class="small-note">For testing only. This permanently erases every student, team, event, mark, poster and message for everyone. Download a backup first if you might need this data later.</div>
+      ${SESSION.clearAllUnlocked? `
+        <div class="btnrow"><button class="btn danger" onclick="openClearAll()">🗑 Clear everything</button></div>
+        <button class="linkbtn" style="margin-top:6px;" onclick="SESSION.clearAllUnlocked=false;render();">🔒 Lock this again</button>
+      ` : `
+        <div class="btnrow"><button class="btn outline" onclick="openUnlockClearAll()">🔒 Unlock to clear data</button></div>
+      `}
+    </div>
   `;
+}
+function openUnlockClearAll(){
+  openModal(`
+    <h2>Unlock Clear All Data</h2>
+    <div class="sub">Enter the admin password to unlock this for the rest of your session.</div>
+    <input type="password" id="unlockClearPw" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="btnrow"><button class="btn accent" onclick="confirmUnlockClearAll()">Unlock</button></div>
+  `);
+}
+async function confirmUnlockClearAll(){
+  const v = document.getElementById('unlockClearPw').value;
+  await pull('settings');
+  if(v !== STATE.settings.adminPassword) return toast("Wrong password");
+  SESSION.clearAllUnlocked = true;
+  closeModal(); toast("Unlocked"); render();
+}
+function openClearAll(){
+  openModal(`
+    <h2>Clear all data?</h2>
+    <div class="sub">This cannot be undone. Enter the admin password one more time to confirm.</div>
+    <input type="password" id="clearAllPw" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="btnrow"><button class="btn danger" onclick="confirmClearAll()">Yes, erase everything</button></div>
+  `);
+}
+async function confirmClearAll(){
+  const v = document.getElementById('clearAllPw').value;
+  await pull('settings');
+  if(v !== STATE.settings.adminPassword) return toast("Wrong password");
+  const d = defaultState();
+  d.settings.adminUsername = STATE.settings.adminUsername;
+  d.settings.adminPassword = STATE.settings.adminPassword;
+  d.settings.siteColor = STATE.settings.siteColor;
+  STATE = d;
+  await Promise.all([
+    saveKey('settings', STATE.settings), saveKey('teams', STATE.teams),
+    saveKey('students', STATE.students), saveKey('competitions', STATE.competitions),
+    saveKey('posters', STATE.posters), saveKey('toppers', STATE.toppers),
+    saveKey('messages', STATE.messages), saveKey('notifications', STATE.notifications),
+    saveKey('published', STATE.published)
+  ]);
+  SESSION.clearAllUnlocked = false;
+  closeModal(); toast("Everything cleared"); render();
 }
 async function setThemeColor(c){
   await pull('settings');
