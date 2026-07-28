@@ -54,11 +54,30 @@ input,select,textarea{font-family:inherit;font-size:15px;}
   text-align:center;padding:34px 10px 20px;
 }
 .hero-banner{width:100%;border-radius:0 0 22px 22px;overflow:hidden;margin:0 0 4px;box-shadow:var(--shadow);}
-.hero-banner img{width:100%;display:block;max-height:220px;object-fit:cover;}
-@keyframes animIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
-.anim-in{opacity:0;animation:animIn .55s cubic-bezier(.2,.7,.3,1) forwards;}
+.hero-banner img{width:100%;display:block;max-height:220px;object-fit:cover;animation:kenBurns 6s ease-out forwards;}
+@keyframes kenBurns{0%{transform:scale(1.18);}100%{transform:scale(1);}}
+@keyframes animIn{
+  0%{opacity:0;transform:translateY(26px) scale(.88) rotate(-2deg);}
+  60%{opacity:1;transform:translateY(-4px) scale(1.02) rotate(.5deg);}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}
+}
+.anim-in{opacity:0;animation:animIn .7s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes floatIcon{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-5px) rotate(-4deg);}}
+.login-card .ic{animation:floatIcon 2.6s ease-in-out infinite;}
+.login-card:nth-child(1) .ic{animation-delay:.1s;}
+.login-card:nth-child(2) .ic{animation-delay:.35s;}
+.login-card:nth-child(3) .ic{animation-delay:.6s;}
+.login-card{transition:transform .15s ease, box-shadow .15s ease;}
+.login-card:active{transform:scale(.96) rotate(-.5deg);}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(226,149,46,.55);}70%{box-shadow:0 0 0 7px rgba(226,149,46,0);}}
+.brand .dot{animation:dotPulse 1.8s ease-out infinite;}
+.hero-banner{position:relative;}
+.hero-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%);background-size:250% 100%;background-position:150% 0;animation:shimmerSweep 1.6s ease-out .3s 1;}
+@keyframes shimmerSweep{to{background-position:-50% 0;}}
 .spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--cement-2);border-top-color:var(--accent);animation:spin .8s linear infinite;margin:0 auto 14px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes crownBounce{0%,100%{transform:translateY(0) rotate(-6deg);}50%{transform:translateY(-3px) rotate(6deg);}}
+.crown-bounce{display:inline-block;animation:crownBounce 1.4s ease-in-out infinite;}
 .hero h1{font-size:26px;margin:6px 0 2px;letter-spacing:.2px;}
 .hero p{color:#6b6a62;font-size:14px;margin:0;}
 .login-grid{display:flex;flex-direction:column;gap:12px;margin-top:24px;}
@@ -132,8 +151,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 .modal .sub{font-size:12.5px;color:#7a7a72;margin-bottom:8px;}
 .closebar{width:38px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 12px;}
 
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:13.5px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s, bottom .25s;box-shadow:var(--shadow);}
-.toast.show{opacity:1;bottom:100px;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) scale(.7);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:13.5px;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s, transform .3s cubic-bezier(.34,1.56,.64,1), bottom .25s;box-shadow:var(--shadow);}
+.toast.show{opacity:1;bottom:100px;transform:translateX(-50%) scale(1);}
 
 .colorswatch{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
 .sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 1px var(--line);}
@@ -218,13 +237,27 @@ let currentAdminTab = "overview";
 let currentLeaderTab = "roster";
 
 /* ---------------- storage helpers ---------------- */
+// Extra safety net: every time a key is successfully read from or written
+// to shared storage, also keep a timestamped copy in THIS device's own
+// browser storage. If shared storage ever comes back empty/corrupted, an
+// admin can restore from this local mirror without needing a manually
+// downloaded backup file.
+const MIRROR_PREFIX = 'rdv_mirror_';
+function mirrorSave(key, value){
+  try{ localStorage.setItem(MIRROR_PREFIX+key, JSON.stringify({value, at: Date.now()})); }catch(e){}
+}
+function mirrorLoad(key){
+  try{ const raw = localStorage.getItem(MIRROR_PREFIX+key); return raw? JSON.parse(raw) : null; }catch(e){ return null; }
+}
 async function loadKey(key, fallback){
-  for(let attempt=1; attempt<=3; attempt++){
+  for(let attempt=1; attempt<=4; attempt++){
     try{
       const r = await window.storage.get(key, true);
-      return r ? JSON.parse(r.value) : fallback;
+      const val = r ? JSON.parse(r.value) : fallback;
+      if(r) mirrorSave(key, val);
+      return val;
     }catch(e){
-      if(attempt<3) await new Promise(res=>setTimeout(res, 400*attempt));
+      if(attempt<4) await new Promise(res=>setTimeout(res, 400*attempt));
     }
   }
   return fallback;
@@ -234,7 +267,7 @@ async function saveKey(key, value){
   for(let attempt=1; attempt<=3; attempt++){
     try{
       const r = await window.storage.set(key, payload, true);
-      if(r) return true;
+      if(r){ mirrorSave(key, value); return true; }
     }catch(e){ /* retry */ }
     if(attempt<3) await new Promise(res=>setTimeout(res, 500*attempt));
   }
@@ -274,28 +307,29 @@ function defaultState(){
     toppers:[],
     messages:[],
     notifications:[],
-    published:{ teamPoints:{}, results:{} } // snapshot shown to students/leaders; results[eventId] = participants array
+    published:{ teamPoints:{}, results:{}, toppers:[] } // snapshot shown to students/leaders; results[eventId] = participants array; toppers = published top-scorer snapshot
   };
 }
 
 async function loadAll(){
-  const [settings,teams,students,competitions,posters,toppers,messages,notifications,published] = await Promise.all([
-    loadKey("settings", null),
-    loadKey("teams", null),
-    loadKey("students", []),
-    loadKey("competitions", []),
-    loadKey("posters", []),
-    loadKey("toppers", []),
-    loadKey("messages", []),
-    loadKey("notifications", []),
-    loadKey("published", null)
-  ]);
+  const prev = STATE; // whatever we already have in memory (null on first boot)
   const d = defaultState();
+  const [settings,teams,students,competitions,posters,toppers,messages,notifications,published] = await Promise.all([
+    loadKey("settings", prev ? prev.settings : null),
+    loadKey("teams", prev ? prev.teams : null),
+    loadKey("students", prev ? prev.students : []),
+    loadKey("competitions", prev ? prev.competitions : []),
+    loadKey("posters", prev ? prev.posters : []),
+    loadKey("toppers", prev ? prev.toppers : []),
+    loadKey("messages", prev ? prev.messages : []),
+    loadKey("notifications", prev ? prev.notifications : []),
+    loadKey("published", prev ? prev.published : null)
+  ]);
   STATE = {
     settings: Object.assign({}, d.settings, settings || {}),
-    teams: teams || d.teams,
+    teams: teams || (prev ? prev.teams : d.teams),
     students, competitions, posters, toppers, messages, notifications,
-    published: published || d.published
+    published: Object.assign({}, d.published, published || {})
   };
   if(!settings) await saveKey("settings", STATE.settings);
   if(!teams) await saveKey("teams", STATE.teams);
@@ -375,7 +409,7 @@ function renderLogin(){
     </div>
     <div class="card anim-in" style="margin-top:22px;animation-delay:.42s;">
       <h3>🏆 Team Standings</h3>
-      ${hasPoints? standings.map((t,i)=>`<div class="row"><div class="main"><b><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(t.color||'#999')};margin-right:6px;"></span>${i+1}. ${esc(t.name)}</b></div><div class="pill accent">${STATE.published.teamPoints[t.id]||0} pts</div></div>`).join('') : '<div class="small-note">Results haven\'t been published yet</div>'}
+      ${hasPoints? standings.map((t,i)=>`<div class="row anim-in" style="animation-delay:${.5+i*.08}s;"><div class="main"><b><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(t.color||'#999')};margin-right:6px;"></span>${i===0?'<span class="crown-bounce">👑</span> ':''}${i+1}. ${esc(t.name)}</b></div><div class="pill accent">${STATE.published.teamPoints[t.id]||0} pts</div></div>`).join('') : '<div class="small-note">Results haven\'t been published yet</div>'}
     </div>
   `;
 }
@@ -891,23 +925,41 @@ function adminResultsHtml(){
   const q=(SESSION.adminResultsSearch||'').toLowerCase();
   const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
   return `
-    <div class="searchbar"><input type="text" placeholder="Search an event to add its result…" value="${esc(SESSION.adminResultsSearch||'')}" oninput="SESSION.adminResultsSearch=this.value;render();"></div>
+    <div class="searchbar"><input type="text" id="adminResultsInput" placeholder="Search an event to add its result…" value="${esc(SESSION.adminResultsSearch||'')}" oninput="SESSION.adminResultsSearch=this.value;renderAdminResultsListOnly();"></div>
     <div class="card"><h3>Publish results <button class="linkbtn" onclick="publishResults()">Publish now</button></h3><div class="small-note">Only after publishing do students &amp; leaders see results. Nothing new shows until you publish again.</div></div>
-    ${list.length? list.map(ev=>{
+    <div id="adminResultsWrap">${adminResultsListHtml(list)}</div>
+  `;
+}
+function adminResultsListHtml(list){
+  return list.length? list.map(ev=>{
       const count=(ev.participants||[]).length;
       const done = ev.category==='General'? Object.keys(ev.generalMarks||{}).length>0 : (ev.participants||[]).some(p=>p.marks!=null);
       return `<div class="card"><h3>${esc(ev.name)} ${statusPill(ev)}</h3>
       <div class="small-note">${ev.category} · ${count} registered ${done? '· <span style="color:var(--good);">results entered</span>':''}</div>
       <button class="btn outline small" style="margin-top:8px;" onclick="openEventMarks('${ev.id}')">${done?'Edit result':'Add result'}</button>
       </div>`;
-    }).join('') : '<div class="empty">No events found</div>'}
-  `;
+    }).join('') : '<div class="empty">No events found</div>';
+}
+function renderAdminResultsListOnly(){
+  const wrap = document.getElementById('adminResultsWrap');
+  if(!wrap) return;
+  const q=(SESSION.adminResultsSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  wrap.innerHTML = adminResultsListHtml(list);
 }
 /* posters */
 function adminPostersHtml(){
+  const q=(SESSION.adminPosterSearch||'').toLowerCase();
+  const list = STATE.posters.filter(p=>(p.caption||'').toLowerCase().includes(q));
   return `
+    <div class="searchbar"><input type="text" placeholder="Search posters by name…" value="${esc(SESSION.adminPosterSearch||'')}" oninput="SESSION.adminPosterSearch=this.value;renderPostersListOnly();"></div>
     <button class="btn accent" style="margin-bottom:12px;" onclick="openAddPoster()">+ Add Poster</button>
-    ${STATE.posters.length? STATE.posters.map(p=>`
+    <div id="postersListWrap">${postersListHtml(list)}</div>
+  `;
+}
+function postersListHtml(list){
+  if(!list.length) return '<div class="empty">No posters found</div>';
+  return list.map(p=>`
       <div class="card">
         <img class="poster-img" src="${p.url}">
         <div class="row"><div class="main"><b>${esc(p.caption||'Poster')}</b><span>${p.published? 'Published':'Draft'}</span></div>
@@ -916,8 +968,12 @@ function adminPostersHtml(){
           <button class="linkbtn" onclick="togglePoster('${p.id}')">${p.published?'Unpublish':'Publish'}</button>
           <button class="linkbtn" onclick="deletePoster('${p.id}')">Delete</button>
         </div></div>
-      </div>`).join('') : '<div class="empty">No posters yet</div>'}
-  `;
+      </div>`).join('');
+}
+function renderPostersListOnly(){
+  const q=(SESSION.adminPosterSearch||'').toLowerCase();
+  const list = STATE.posters.filter(p=>(p.caption||'').toLowerCase().includes(q));
+  document.getElementById('postersListWrap').innerHTML = postersListHtml(list);
 }
 function openAddPoster(){
   openModal(`
@@ -974,20 +1030,44 @@ function computeToppers(source){
 }
 function adminToppersHtml(){
   const top = computeToppers('draft');
+  const publishedCount = (STATE.published.toppers||[]).length;
   return `
+    <div class="card">
+      <h3>Publish Toppers</h3>
+      <div class="small-note">${publishedCount? `Published: ${publishedCount} toppers currently visible.` : "Not published yet — students won't see any toppers until you publish."}</div>
+      <div class="btnrow"><button class="btn accent" onclick="openPublishToppers()">📣 Publish current toppers</button></div>
+    </div>
     <div class="card">
       <h3>Toppers slide visibility</h3>
       <div class="row"><div class="main"><b>${STATE.settings.toppersHidden?'Hidden from everyone':'Visible to everyone'}</b></div>
       <button class="btn small ${STATE.settings.toppersHidden?'good':'danger'}" onclick="toggleToppersLock()">${STATE.settings.toppersHidden?'Unlock / Show':'Lock / Hide'}</button></div>
-      <div class="small-note">Toppers are calculated automatically from marks — nothing to add manually. This list is the live (draft) picture; students only see the published version once you publish results.</div>
+      <div class="small-note">This only hides/shows the already-published toppers — it doesn't change who's on the list.</div>
     </div>
+    <div class="small-note" style="margin:4px 4px 8px;">Live picture (not yet published) — calculated automatically from marks:</div>
     ${top.length? top.map((t,i)=>`<div class="row card"><div class="main"><b>${i+1}. ${esc(t.name)}</b><span>${esc(t.team)}</span></div><div class="pill accent">${t.score}</div></div>`).join('') : '<div class="empty">No marks entered yet</div>'}
   `;
+}
+function openPublishToppers(){
+  openModal(`
+    <h2>Publish Toppers</h2>
+    <div class="sub">This makes the current top scorers visible to everyone. Enter the admin password to confirm.</div>
+    <input type="password" id="publishToppersPw" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="btnrow"><button class="btn accent" onclick="confirmPublishToppers()">Publish</button></div>
+  `);
+}
+async function confirmPublishToppers(){
+  const v = document.getElementById('publishToppersPw').value;
+  await pull('settings');
+  if(v !== STATE.settings.adminPassword) return toast("Wrong password");
+  await pull('competitions'); await pull('students'); await pull('published');
+  STATE.published.toppers = computeToppers('draft');
+  await save('published');
+  closeModal(); toast("Toppers published"); render();
 }
 function toggleToppersLock(){
   openModal(`
     <h2>Confirm admin password</h2>
-    <input type="password" id="toppersLockPw">
+    <input type="password" id="toppersLockPw" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div class="btnrow"><button class="btn accent" onclick="confirmToppersLock()">Confirm</button></div>
   `);
 }
@@ -1055,6 +1135,12 @@ function adminSettingsHtml(){
       <label style="margin-top:10px;">Restore from a backup file</label>
       <input type="file" id="restoreFile" accept="application/json">
       <div class="btnrow"><button class="btn danger" onclick="importBackup()">Restore (overwrites current data)</button></div>
+    </div>
+    <div class="card">
+      <h3>This Device's Auto-Backup</h3>
+      <div class="small-note">${localMirrorSummary()}</div>
+      <div class="btnrow"><button class="btn outline" onclick="restoreFromMirror()">↺ Restore from this device's auto-backup</button></div>
+      <div class="small-note">This device quietly keeps its own recent copy of everything every time it successfully saves or loads. Use this if shared data ever looks wrong or empty — it doesn't need a downloaded file.</div>
     </div>
     <div class="card">
       <h3>Clear All Data</h3>
@@ -1131,20 +1217,67 @@ async function saveRules(){
   STATE.settings.registrationDeadline = deadline;
   await save('settings'); toast("Saved"); render();
 }
-function exportBackup(){
+async function exportBackup(){
+  toast("Gathering the latest data…");
+  // Pull every key fresh from shared storage first, so the backup reflects
+  // everything that's actually saved — not just whatever this device
+  // happened to have in memory at that moment.
+  await Promise.all(MIRROR_KEYS.map(k=>pull(k)));
   const backup = {
     exportedAt: new Date().toISOString(),
     settings: STATE.settings, teams: STATE.teams, students: STATE.students,
     competitions: STATE.competitions, posters: STATE.posters, toppers: STATE.toppers,
     messages: STATE.messages, notifications: STATE.notifications, published: STATE.published
   };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `rendezvous-backup-${Date.now()}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast("Backup downloaded");
+  const json = JSON.stringify(backup, null, 2);
+  let downloadOk = false;
+  try{
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `rendezvous-backup-${Date.now()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    downloadOk = true;
+  }catch(e){ downloadOk = false; }
+  // Always also show it inline — some mobile browsers/webviews silently
+  // block the file download above, so this is the guaranteed fallback:
+  // the admin can copy the text and save it anywhere (Notes, WhatsApp, email).
+  window.__lastBackupJson = json;
+  openModal(`
+    <h2>Backup ready</h2>
+    <div class="sub">Direct file downloads don't work reliably inside this chat preview — that's expected, not an error. Use one of these instead:</div>
+    <div class="btnrow"><button class="btn accent" onclick="shareBackupFile()">📤 Share / Save to Files</button></div>
+    <div class="btnrow"><button class="btn outline" onclick="copyBackupText()">📋 Copy backup text</button></div>
+    <div class="small-note">"Share" opens your phone's normal share sheet — save it to Files, or send it to yourself on WhatsApp/email. If that's not available, copy the text and paste it into a Notes app instead.</div>
+    <textarea readonly rows="6" style="margin-top:10px;font-size:11px;" onclick="this.select()">${esc(json)}</textarea>
+  `);
+}
+async function shareBackupFile(){
+  const text = window.__lastBackupJson || '';
+  const filename = `rendezvous-backup-${Date.now()}.json`;
+  try{
+    if(navigator.canShare && window.File){
+      const file = new File([text], filename, {type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Rendezvous backup'});
+        return;
+      }
+    }
+    if(navigator.share){
+      await navigator.share({title:'Rendezvous backup', text});
+      return;
+    }
+    toast("Sharing isn't supported here — use Copy instead");
+  }catch(e){ /* user cancelled the share sheet — not an error */ }
+}
+function copyBackupText(){
+  const text = window.__lastBackupJson || '';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast("Copied — paste it somewhere safe")).catch(()=>toast("Couldn't copy — select the text manually and copy it"));
+  } else {
+    toast("Select the text below and copy it manually");
+  }
 }
 function importBackup(){
   const file = document.getElementById('restoreFile').files[0];
@@ -1162,6 +1295,33 @@ function importBackup(){
     }catch(e){ toast("That file doesn't look like a valid backup"); }
   };
   reader.readAsText(file);
+}
+const MIRROR_KEYS = ['settings','teams','students','competitions','posters','toppers','messages','notifications','published'];
+function localMirrorSummary(){
+  let newest = 0, found = 0;
+  MIRROR_KEYS.forEach(k=>{ const m = mirrorLoad(k); if(m){ found++; if(m.at>newest) newest=m.at; } });
+  if(!found) return "No local auto-backup on this device yet — it builds up as you use the site.";
+  return `Last saved on this device: ${new Date(newest).toLocaleString()} (${found}/${MIRROR_KEYS.length} parts found).`;
+}
+function restoreFromMirror(){
+  const have = MIRROR_KEYS.filter(k=>mirrorLoad(k));
+  if(!have.length) return toast("No local auto-backup found on this device");
+  openModal(`
+    <h2>Restore from this device's auto-backup</h2>
+    <div class="sub">${localMirrorSummary()} This will overwrite the shared data for everyone. Enter the admin password to confirm.</div>
+    <input type="password" id="mirrorRestorePw" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="btnrow"><button class="btn danger" onclick="confirmRestoreFromMirror()">Restore now</button></div>
+  `);
+}
+async function confirmRestoreFromMirror(){
+  const v = document.getElementById('mirrorRestorePw').value;
+  await pull('settings');
+  if(v !== STATE.settings.adminPassword) return toast("Wrong password");
+  for(const k of MIRROR_KEYS){
+    const m = mirrorLoad(k);
+    if(m){ STATE[k] = m.value; await saveKey(k, m.value); }
+  }
+  closeModal(); toast("Restored from this device's auto-backup"); render();
 }
 function adminGlobalSearch(q){
   q=q.toLowerCase();
@@ -1183,7 +1343,7 @@ function adminGlobalSearch(q){
 ============================================================ */
 function renderLeader(){
   const team = STATE.teams.find(t=>t.id===SESSION.teamId);
-  setTopbar(team? team.name : "Team Leader", `<button class="iconbtn" onclick="refreshNow()">🔄</button><button class="iconbtn" onclick="switchLeaderTab('notify')">🔔${STATE.notifications.length?`<span class="badge">${STATE.notifications.length}</span>`:''}</button><button class="iconbtn" onclick="logout()">⎋</button>`);
+  setTopbar(team? team.name : "Team Leader", `<button class="iconbtn" onclick="refreshNow()">🔄</button><button class="iconbtn" onclick="switchLeaderTab('notify')">🔔${unseenNotifCount()?`<span class="badge">${unseenNotifCount()}</span>`:''}</button><button class="iconbtn" onclick="logout()">⎋</button>`);
   setBottomNav([
     {id:'roster',icon:'🧑‍🤝‍🧑',label:'My Team'},
     {id:'register',icon:'📋',label:'Register'},
@@ -1199,20 +1359,38 @@ function renderLeader(){
   else if(currentLeaderTab==='notify') c.innerHTML = leaderNotifyHtml();
   else c.innerHTML = leaderAccountHtml(team);
 }
-function switchLeaderTab(id){ currentLeaderTab=id; render(); }
+function unseenNotifCount(){
+  const seenAt = SESSION.notifSeenAt || 0;
+  return STATE.notifications.filter(n=>n.time > seenAt).length;
+}
+function switchLeaderTab(id){
+  currentLeaderTab=id;
+  if(id==='notify') SESSION.notifSeenAt = Date.now();
+  render();
+}
 
 function leaderRosterHtml(team){
+  const pts = STATE.published.teamPoints[team.id];
   const q=(SESSION.leaderRosterSearch||'').toLowerCase();
   const roster = STATE.students.filter(s=>s.teamId===team.id && s.name.toLowerCase().includes(q));
-  const pts = STATE.published.teamPoints[team.id];
   return `
     <div class="card"><h3>Published team points</h3><div class="pill accent" style="font-size:16px;padding:8px 14px;">${pts!=null? pts : '—'}</div></div>
-    <div class="searchbar"><input type="text" placeholder="Search my team's students…" value="${esc(SESSION.leaderRosterSearch||'')}" oninput="SESSION.leaderRosterSearch=this.value;render();"></div>
-    ${roster.length? `<div class="card">`+roster.map(s=>{
+    <div class="searchbar"><input type="text" id="leaderRosterInput" placeholder="Search my team's students…" value="${esc(SESSION.leaderRosterSearch||'')}" oninput="SESSION.leaderRosterSearch=this.value;renderLeaderRosterListOnly('${team.id}');"></div>
+    <div id="leaderRosterWrap">${leaderRosterListHtml(roster)}</div>
+  `;
+}
+function leaderRosterListHtml(roster){
+  return roster.length? `<div class="card">`+roster.map(s=>{
       const events = STATE.competitions.filter(ev=>(ev.participants||[]).some(p=>p.studentId===s.id));
       return `<div class="row"><div class="main"><b>${esc(s.name)}</b><span>${s.category}${events.length? ' · '+events.map(e=>e.name).join(', '):''}</span></div></div>`;
-    }).join('')+`</div>` : '<div class="empty">No students in your team yet — ask admin to add them</div>'}
-  `;
+    }).join('')+`</div>` : '<div class="empty">No students in your team yet — ask admin to add them</div>';
+}
+function renderLeaderRosterListOnly(teamId){
+  const wrap = document.getElementById('leaderRosterWrap');
+  if(!wrap) return;
+  const q=(SESSION.leaderRosterSearch||'').toLowerCase();
+  const roster = STATE.students.filter(s=>s.teamId===teamId && s.name.toLowerCase().includes(q));
+  wrap.innerHTML = leaderRosterListHtml(roster);
 }
 function pastDeadline(){
   if(!STATE.settings.registrationDeadline) return false;
@@ -1264,9 +1442,19 @@ function leaderEventsHtml(){
   const q=(SESSION.leaderEventSearch||'').toLowerCase();
   const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
   return `
-    <div class="searchbar"><input type="text" placeholder="Search events…" value="${esc(SESSION.leaderEventSearch||'')}" oninput="SESSION.leaderEventSearch=this.value;render();"></div>
-    ${list.length? list.map(ev=>`<div class="card"><h3>${esc(ev.name)} ${statusPill(ev)}</h3><div class="small-note">${ev.category} · max ${ev.maxPerTeam}/team</div></div>`).join('') : '<div class="empty">No events found</div>'}
+    <div class="searchbar"><input type="text" id="leaderEventInput" placeholder="Search events…" value="${esc(SESSION.leaderEventSearch||'')}" oninput="SESSION.leaderEventSearch=this.value;renderLeaderEventsListOnly();"></div>
+    <div id="leaderEventsWrap">${leaderEventsListHtml(list)}</div>
   `;
+}
+function leaderEventsListHtml(list){
+  return list.length? list.map(ev=>`<div class="card"><h3>${esc(ev.name)} ${statusPill(ev)}</h3><div class="small-note">${ev.category} · max ${ev.maxPerTeam}/team</div></div>`).join('') : '<div class="empty">No events found</div>';
+}
+function renderLeaderEventsListOnly(){
+  const wrap = document.getElementById('leaderEventsWrap');
+  if(!wrap) return;
+  const q=(SESSION.leaderEventSearch||'').toLowerCase();
+  const list = STATE.competitions.filter(e=>e.name.toLowerCase().includes(q));
+  wrap.innerHTML = leaderEventsListHtml(list);
 }
 function leaderMessagesHtml(team){
   const mine = STATE.messages.filter(m=>m.teamId===team.id);
@@ -1320,20 +1508,38 @@ function renderStudent(){
   document.getElementById('bottomnav').style.display='none';
   document.getElementById('bottomnav').innerHTML='';
   const c = document.getElementById('content');
-  let matches = [];
-  if(SESSION.studentQuery && SESSION.studentQuery.length>0){
-    matches = STATE.students.filter(s=>s.name.toLowerCase().includes(SESSION.studentQuery.toLowerCase()));
-  }
-  const posters = STATE.posters.filter(p=>p.published);
-  const pubToppers = computeToppers('published');
+  const pubToppers = STATE.published.toppers || [];
   const toppersBlock = (!STATE.settings.toppersHidden && pubToppers.length) ? `
     <div class="card"><h3>🏅 Toppers</h3>${pubToppers.map((t,i)=>`<div class="row"><div class="main"><b>${i+1}. ${esc(t.name)}</b><span>${esc(t.team)}</span></div><div class="pill accent">${t.score}</div></div>`).join('')}</div>` : '';
   c.innerHTML = `
-    <div class="searchbar"><input type="text" placeholder="Type your name…" value="${esc(SESSION.studentQuery||'')}" oninput="SESSION.studentQuery=this.value;render();"></div>
-    ${SESSION.studentQuery ? (matches.length? matches.map(s=>studentCardHtml(s)).join('') : '<div class="empty">No student found with that name</div>') : ''}
+    <div class="searchbar"><input type="text" id="studentNameInput" placeholder="Type your name…" value="${esc(SESSION.studentQuery||'')}" oninput="SESSION.studentQuery=this.value;renderStudentMatchesOnly();"></div>
+    <div id="studentMatchesWrap">${studentMatchesHtml()}</div>
     ${toppersBlock}
-    <div class="card"><h3>📢 Posters</h3>${posters.length? posters.map(p=>`<img class="poster-img" src="${p.url}"><a class="btn outline small" download="poster.jpg" href="${p.url}" style="margin-bottom:10px;">Download</a>`).join('') : '<div class="small-note">No posters published yet</div>'}</div>
+    <div class="card">
+      <h3>📢 Posters</h3>
+      <div class="searchbar"><input type="text" id="posterSearchInput" placeholder="Search posters by name…" value="${esc(SESSION.posterQuery||'')}" oninput="SESSION.posterQuery=this.value;renderPosterMatchesOnly();"></div>
+      <div id="posterMatchesWrap">${posterMatchesHtml()}</div>
+    </div>
   `;
+}
+function studentMatchesHtml(){
+  if(!SESSION.studentQuery) return '';
+  const matches = STATE.students.filter(s=>s.name.toLowerCase().includes(SESSION.studentQuery.toLowerCase()));
+  return matches.length? matches.map(s=>studentCardHtml(s)).join('') : '<div class="empty">No student found with that name</div>';
+}
+function renderStudentMatchesOnly(){
+  const wrap = document.getElementById('studentMatchesWrap');
+  if(wrap) wrap.innerHTML = studentMatchesHtml();
+}
+function posterMatchesHtml(){
+  const posters = STATE.posters.filter(p=>p.published);
+  const posterQ = (SESSION.posterQuery||'').toLowerCase();
+  const posterMatches = posterQ? posters.filter(p=>(p.caption||'').toLowerCase().includes(posterQ)) : posters;
+  return posterMatches.length? posterMatches.map(p=>`<div style="margin-bottom:10px;">${p.caption? `<div class="small-note" style="margin-bottom:4px;">${esc(p.caption)}</div>`:''}<img class="poster-img" src="${p.url}"><a class="btn outline small" download="poster.jpg" href="${p.url}">Download</a></div>`).join('') : (posterQ? '<div class="small-note">No posters match that name</div>' : '<div class="small-note">No posters published yet</div>');
+}
+function renderPosterMatchesOnly(){
+  const wrap = document.getElementById('posterMatchesWrap');
+  if(wrap) wrap.innerHTML = posterMatchesHtml();
 }
 function studentCardHtml(s){
   const events = STATE.competitions.filter(ev=>(ev.participants||[]).some(p=>p.studentId===s.id));
@@ -1343,13 +1549,20 @@ function studentCardHtml(s){
     <div class="small-note">${s.category} · ${teamName(s.teamId)}</div>
     <label>Events</label>
     ${events.length? events.map(ev=>{
-      const pubList = STATE.published.results ? STATE.published.results[ev.id] : null;
-      const pubEntry = pubList ? pubList.find(p=>p.studentId===s.id) : null;
       let detail = statusPillPlain(ev);
-      if(pubEntry && (pubEntry.grade||pubEntry.position||pubEntry.marks!=null)){
-        detail += ' · ' + [pubEntry.grade, pubEntry.position? 'Pos '+pubEntry.position:null, pubEntry.marks!=null? pubEntry.marks+' marks':null].filter(Boolean).join(', ');
-      } else if(ev.status==='ended'){
-        detail += ' · result pending publish';
+      if(ev.category==='General'){
+        const genMarks = STATE.published.results ? STATE.published.results[ev.id+'_general'] : null;
+        const teamMark = genMarks ? genMarks[s.teamId] : null;
+        if(teamMark!=null) detail += ` · ${teamMark} marks (shared with your team)`;
+        else if(ev.status==='ended') detail += ' · result pending publish';
+      } else {
+        const pubList = STATE.published.results ? STATE.published.results[ev.id] : null;
+        const pubEntry = pubList ? pubList.find(p=>p.studentId===s.id) : null;
+        if(pubEntry && (pubEntry.grade||pubEntry.position||pubEntry.marks!=null)){
+          detail += ' · ' + [pubEntry.grade, pubEntry.position? 'Pos '+pubEntry.position:null, pubEntry.marks!=null? pubEntry.marks+' marks':null].filter(Boolean).join(', ');
+        } else if(ev.status==='ended'){
+          detail += ' · result pending publish';
+        }
       }
       return `<div class="row"><div class="main"><b>${esc(ev.name)}</b><span>${detail}</span></div></div>`;
     }).join('') : '<div class="small-note">No events registered</div>'}
@@ -1377,7 +1590,7 @@ function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, m=>({'&':'&am
     const typing = document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
     if(modalOpen || typing) return;
     try{ await loadAll(); render(); }catch(e){ /* ignore transient errors */ }
-  }, 10000);
+  }, 18000);
 })();
 
 </script>
