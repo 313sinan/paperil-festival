@@ -76,6 +76,8 @@ input,select,textarea{font-family:inherit;font-size:15px;}
 @keyframes shimmerSweep{to{background-position:-50% 0;}}
 .spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--cement-2);border-top-color:var(--accent);animation:spin .8s linear infinite;margin:0 auto 14px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.page-anim{animation:pageIn .32s ease-out;}
 @keyframes crownBounce{0%,100%{transform:translateY(0) rotate(-6deg);}50%{transform:translateY(-3px) rotate(6deg);}}
 .crown-bounce{display:inline-block;animation:crownBounce 1.4s ease-in-out infinite;}
 .hero h1{font-size:26px;margin:6px 0 2px;letter-spacing:.2px;}
@@ -117,7 +119,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 .btn.danger{background:var(--danger);}
 .btn.good{background:var(--good);}
 .btn.small{width:auto;padding:8px 12px;font-size:13px;}
-.btn:active{opacity:.85;}
+.btn:active{opacity:.85;transform:scale(.97);}
 .btn[disabled]{opacity:.45;pointer-events:none;}
 .btnrow{display:flex;gap:8px;margin-top:10px;}
 .btnrow .btn{flex:1;}
@@ -127,7 +129,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{flex:none;padding:8px 13px;border-radius:99px;background:var(--cement-2);font-size:13px;font-weight:600;color:#565550;}
+.tab{flex:none;padding:8px 13px;border-radius:99px;background:var(--cement-2);font-size:13px;font-weight:600;color:#565550;transition:background .2s, color .2s, transform .15s;}
+.tab:active{transform:scale(.95);}
 .tab.active{background:var(--ink);color:#fff;}
 
 .empty{text-align:center;padding:30px 10px;color:#8a8980;font-size:13.5px;}
@@ -138,7 +141,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
   border-top:1px solid var(--line);display:flex;z-index:20;
   padding:6px 4px calc(6px + env(safe-area-inset-bottom));
 }
-.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;background:transparent;color:#8a8980;font-size:10.5px;font-weight:700;}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;background:transparent;color:#8a8980;font-size:10.5px;font-weight:700;transition:color .2s, transform .15s;}
+.navbtn:active{transform:scale(.92);}
+.navbtn.active .ic{animation:navPop .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes navPop{0%{transform:scale(1);}45%{transform:scale(1.28);}100%{transform:scale(1);}}
 .navbtn .ic{font-size:18px;}
 .navbtn.active{color:var(--accent);}
 
@@ -491,11 +497,13 @@ function renderAdmin(){
     {id:'more',icon:'⚙️',label:'More'},
   ], currentAdminTab==='overview'||['overview'].includes(currentAdminTab)?currentAdminTab:(['students','teams','events'].includes(currentAdminTab)?currentAdminTab:'more'), 'switchAdminTab');
   const c = document.getElementById('content');
-  if(currentAdminTab==='overview') c.innerHTML = adminOverviewHtml();
-  else if(currentAdminTab==='students') c.innerHTML = adminStudentsHtml();
-  else if(currentAdminTab==='teams') c.innerHTML = adminTeamsHtml();
-  else if(currentAdminTab==='events') c.innerHTML = adminEventsHtml();
-  else c.innerHTML = adminMoreHtml();
+  let bodyHtml;
+  if(currentAdminTab==='overview') bodyHtml = adminOverviewHtml();
+  else if(currentAdminTab==='students') bodyHtml = adminStudentsHtml();
+  else if(currentAdminTab==='teams') bodyHtml = adminTeamsHtml();
+  else if(currentAdminTab==='events') bodyHtml = adminEventsHtml();
+  else bodyHtml = adminMoreHtml();
+  c.innerHTML = `<div class="page-anim">${bodyHtml}</div>`;
 }
 function switchAdminTab(id){ currentAdminTab=id; render(); }
 function unreadMsgCount(){ return STATE.messages.filter(m=>!m.reply).length; }
@@ -821,9 +829,11 @@ function openAddParticipant(evId){
 }
 async function confirmAddParticipant(evId){
   const sid = document.getElementById('addPStudent').value;
+  const btn = event && event.target;
+  if(btn){ btn.disabled = true; btn.textContent = 'Adding…'; }
   await pull('competitions'); await pull('students');
   const r = tryRegister(evId, sid);
-  if(!r.ok) return toast(r.msg);
+  if(!r.ok){ if(btn){ btn.disabled=false; btn.textContent='Add'; } return toast(r.msg); }
   await save('competitions'); closeModal(); toast("Added"); render();
 }
 async function removeParticipant(evId, sid){
@@ -961,7 +971,7 @@ function postersListHtml(list){
   if(!list.length) return '<div class="empty">No posters found</div>';
   return list.map(p=>`
       <div class="card">
-        <img class="poster-img" src="${p.url}">
+        <img class="poster-img" src="${p.url}" loading="lazy" decoding="async">
         <div class="row"><div class="main"><b>${esc(p.caption||'Poster')}</b><span>${p.published? 'Published':'Draft'}</span></div>
         <div style="display:flex;gap:8px;">
           <a class="linkbtn" download="poster.jpg" href="${p.url}">Download</a>
@@ -980,21 +990,48 @@ function openAddPoster(){
     <h2>Add Poster</h2>
     <label>Image</label><input type="file" id="posterFile" accept="image/*">
     <label>Caption</label><input type="text" id="posterCaption">
-    <div class="btnrow"><button class="btn accent" onclick="saveNewPoster()">Add</button></div>
-    <div class="small-note">Tip: use a compressed image (under ~1MB) so it loads fast on everyone's phone.</div>
+    <div class="btnrow"><button class="btn accent" id="addPosterBtn" onclick="saveNewPoster()">Add</button></div>
+    <div class="small-note">Images are automatically resized/compressed so they add and load quickly.</div>
   `);
 }
-function saveNewPoster(){
+function compressImageFile(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h * (maxDim / w)); w = maxDim; }
+          else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>reject(new Error('Could not read that image'));
+      img.src = reader.result;
+    };
+    reader.onerror = ()=>reject(new Error('Could not read that file'));
+    reader.readAsDataURL(file);
+  });
+}
+async function saveNewPoster(){
   const file = document.getElementById('posterFile').files[0];
   const caption = document.getElementById('posterCaption').value.trim();
   if(!file) return toast("Choose an image");
-  const reader = new FileReader();
-  reader.onload = async ()=>{
+  const btn = document.getElementById('addPosterBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Adding…'; }
+  try{
+    const dataUrl = await compressImageFile(file, 1000, 0.7);
     await pull('posters');
-    STATE.posters.unshift({id:uid(), url:reader.result, caption, published:false});
-    await save('posters'); closeModal(); toast("Poster added"); render();
-  };
-  reader.readAsDataURL(file);
+    STATE.posters.unshift({id:uid(), url:dataUrl, caption, published:true});
+    await save('posters'); closeModal(); toast("Poster added and published"); render();
+  }catch(e){
+    toast("Couldn't add that image — try a different file");
+    if(btn){ btn.disabled = false; btn.textContent = 'Add'; }
+  }
 }
 async function togglePoster(id){
   await pull('posters');
@@ -1094,6 +1131,8 @@ function openReply(id){
 }
 async function sendReply(id){
   const text = document.getElementById('replyText').value.trim();
+  const btn = event && event.target;
+  if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
   await pull('messages');
   const m = STATE.messages.find(x=>x.id===id);
   if(!m) return toast("Message no longer exists");
@@ -1230,20 +1269,38 @@ async function exportBackup(){
     messages: STATE.messages, notifications: STATE.notifications, published: STATE.published
   };
   const json = JSON.stringify(backup, null, 2);
+  const filename = `rendezvous-backup-${Date.now()}.json`;
+  window.__lastBackupJson = json;
+
+  // Try the most reliable option first: the phone's native Share sheet
+  // (works inside embedded webviews where plain file downloads often get
+  // silently blocked). This call happens directly inside the button click,
+  // so it's allowed to trigger native UI.
+  try{
+    if(navigator.canShare && window.File){
+      const file = new File([json], filename, {type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Rendezvous backup'});
+        toast("Backup shared");
+        return;
+      }
+    }
+  }catch(e){ /* user cancelled, or share isn't supported here — fall through */ }
+
+  // Fall back to a classic file download.
   let downloadOk = false;
   try{
     const blob = new Blob([json], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `rendezvous-backup-${Date.now()}.json`;
+    a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
     downloadOk = true;
   }catch(e){ downloadOk = false; }
   // Always also show it inline — some mobile browsers/webviews silently
   // block the file download above, so this is the guaranteed fallback:
   // the admin can copy the text and save it anywhere (Notes, WhatsApp, email).
-  window.__lastBackupJson = json;
   openModal(`
     <h2>Backup ready</h2>
     <div class="sub">Direct file downloads don't work reliably inside this chat preview — that's expected, not an error. Use one of these instead:</div>
@@ -1284,15 +1341,20 @@ function importBackup(){
   if(!file) return toast("Choose a backup file first");
   const reader = new FileReader();
   reader.onload = async ()=>{
-    try{
-      const data = JSON.parse(reader.result);
-      const keys = ['settings','teams','students','competitions','posters','toppers','messages','notifications','published'];
-      for(const k of keys){
-        if(data[k] !== undefined){ STATE[k] = data[k]; await saveKey(k, data[k]); }
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(e){ toast("That file doesn't look like a valid backup — couldn't read it as JSON"); return; }
+    let restoredCount = 0, failedKeys = [];
+    for(const k of MIRROR_KEYS){
+      if(data[k] !== undefined){
+        STATE[k] = data[k];
+        const ok = await saveKey(k, data[k]);
+        if(ok) restoredCount++; else failedKeys.push(k);
       }
-      toast("Restored from backup");
-      render();
-    }catch(e){ toast("That file doesn't look like a valid backup"); }
+    }
+    if(restoredCount===0){ toast("Nothing restorable found in that file"); return; }
+    toast(failedKeys.length? `Restored ${restoredCount} parts, but ${failedKeys.join(', ')} failed — try again` : `Restored ${restoredCount} parts successfully`);
+    render();
   };
   reader.readAsText(file);
 }
@@ -1352,12 +1414,14 @@ function renderLeader(){
     {id:'account',icon:'⚙️',label:'Account'},
   ], currentLeaderTab, 'switchLeaderTab');
   const c = document.getElementById('content');
-  if(currentLeaderTab==='roster') c.innerHTML = leaderRosterHtml(team);
-  else if(currentLeaderTab==='register') c.innerHTML = leaderRegisterHtml(team);
-  else if(currentLeaderTab==='events') c.innerHTML = leaderEventsHtml();
-  else if(currentLeaderTab==='messages') c.innerHTML = leaderMessagesHtml(team);
-  else if(currentLeaderTab==='notify') c.innerHTML = leaderNotifyHtml();
-  else c.innerHTML = leaderAccountHtml(team);
+  let bodyHtml;
+  if(currentLeaderTab==='roster') bodyHtml = leaderRosterHtml(team);
+  else if(currentLeaderTab==='register') bodyHtml = leaderRegisterHtml(team);
+  else if(currentLeaderTab==='events') bodyHtml = leaderEventsHtml();
+  else if(currentLeaderTab==='messages') bodyHtml = leaderMessagesHtml(team);
+  else if(currentLeaderTab==='notify') bodyHtml = leaderNotifyHtml();
+  else bodyHtml = leaderAccountHtml(team);
+  c.innerHTML = `<div class="page-anim">${bodyHtml}</div>`;
 }
 function unseenNotifCount(){
   const seenAt = SESSION.notifSeenAt || 0;
@@ -1433,9 +1497,11 @@ function openLeaderRegister(evId){
 }
 async function confirmLeaderRegister(evId){
   const sid = document.getElementById('lregStudent').value;
+  const btn = event && event.target;
+  if(btn){ btn.disabled = true; btn.textContent = 'Registering…'; }
   await pull('competitions'); await pull('students');
   const r = tryRegister(evId, sid);
-  if(!r.ok) return toast(r.msg);
+  if(!r.ok){ if(btn){ btn.disabled=false; btn.textContent='Register'; } return toast(r.msg); }
   await save('competitions'); closeModal(); toast("Registered"); render();
 }
 function leaderEventsHtml(){
@@ -1474,6 +1540,8 @@ function leaderMessagesHtml(team){
 async function sendLeaderMessage(teamId){
   const text = document.getElementById('leaderMsgText').value.trim();
   if(!text) return toast("Type a message");
+  const btn = event && event.target;
+  if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
   await pull('messages');
   STATE.messages.push({id:uid(), teamId, text, reply:null});
   await save('messages'); toast("Message sent"); render();
@@ -1535,7 +1603,7 @@ function posterMatchesHtml(){
   const posters = STATE.posters.filter(p=>p.published);
   const posterQ = (SESSION.posterQuery||'').toLowerCase();
   const posterMatches = posterQ? posters.filter(p=>(p.caption||'').toLowerCase().includes(posterQ)) : posters;
-  return posterMatches.length? posterMatches.map(p=>`<div style="margin-bottom:10px;">${p.caption? `<div class="small-note" style="margin-bottom:4px;">${esc(p.caption)}</div>`:''}<img class="poster-img" src="${p.url}"><a class="btn outline small" download="poster.jpg" href="${p.url}">Download</a></div>`).join('') : (posterQ? '<div class="small-note">No posters match that name</div>' : '<div class="small-note">No posters published yet</div>');
+  return posterMatches.length? posterMatches.map(p=>`<div style="margin-bottom:10px;">${p.caption? `<div class="small-note" style="margin-bottom:4px;">${esc(p.caption)}</div>`:''}<img class="poster-img" src="${p.url}" loading="lazy" decoding="async"><a class="btn outline small" download="poster.jpg" href="${p.url}">Download</a></div>`).join('') : (posterQ? '<div class="small-note">No posters match that name</div>' : '<div class="small-note">No posters published yet</div>');
 }
 function renderPosterMatchesOnly(){
   const wrap = document.getElementById('posterMatchesWrap');
@@ -1582,15 +1650,21 @@ function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, m=>({'&':'&am
     toast("Local-only mode: data stays on this device only");
   }
   // Keep everyone's screen in sync: quietly re-fetch shared data every
-  // few seconds and re-render, unless a modal is open or the user is
-  // actively typing (so we never yank the keyboard focus away).
-  setInterval(async ()=>{
-    if(window.__RDV_LOCAL_ONLY) return;
+  // ~18-24s (small random jitter so many phones don't all hit storage at
+  // the exact same second) and re-render, unless a modal is open, the user
+  // is actively typing, or a previous refresh is still in flight.
+  let refreshing = false;
+  async function backgroundRefresh(){
+    if(window.__RDV_LOCAL_ONLY || refreshing) return;
     const modalOpen = document.getElementById('overlay').classList.contains('show');
     const typing = document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
     if(modalOpen || typing) return;
-    try{ await loadAll(); render(); }catch(e){ /* ignore transient errors */ }
-  }, 18000);
+    refreshing = true;
+    try{ await loadAll(); render(); }
+    catch(e){ /* ignore transient errors */ }
+    finally{ refreshing = false; }
+  }
+  setInterval(backgroundRefresh, 18000 + Math.floor(Math.random()*6000));
 })();
 
 </script>
